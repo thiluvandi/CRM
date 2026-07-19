@@ -1,4 +1,5 @@
 import { isAdminUser } from "../permissions";
+import logoIcon from "../assets/logo-icon.png";
 
 export default function TopBanner({ currentUser, onLogout, onMenuClick }) {
   return (
@@ -9,10 +10,10 @@ export default function TopBanner({ currentUser, onLogout, onMenuClick }) {
           <span />
           <span />
         </button>
-        <div className="brand-mark">TP</div>
+        <img src={logoIcon} alt="CSG & Associates" className="brand-mark" />
         <div>
-          <div className="brand-name">TaxOps Pro</div>
-          <div className="brand-sub">Chartered Accountant Practice Manager</div>
+          <div className="brand-name">CSG's CRM</div>
+          <div className="brand-sub">CSG & Associates — Chartered Accountants</div>
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logoFull from "../assets/logo-full.jpg";
 
 export default function WhoIsLoggingIn({ users, onCheckAccount, onAuthenticate, onSetInitialPassword }) {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -62,11 +63,8 @@ export default function WhoIsLoggingIn({ users, onCheckAccount, onAuthenticate, 
     <div className="login-screen">
       <div className="login-card">
         <div className="login-brand">
-          <div className="brand-mark">TP</div>
-          <div>
-            <div className="login-brand-name">TaxOps Pro</div>
-            <div className="login-brand-sub">Chartered Accountant Practice Manager</div>
-          </div>
+          <img src={logoFull} alt="CSG & Associates" className="login-logo-full" />
+          <div className="login-brand-name">CSG's CRM</div>
         </div>
 
         {!selectedUser ? (

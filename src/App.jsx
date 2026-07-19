@@ -142,7 +142,7 @@ export default function App() {
   };
 
   if (loading) {
-    return <div className="auth-loading-screen">Loading TaxOps Pro…</div>;
+    return <div className="auth-loading-screen">Loading CSG's CRM…</div>;
   }
 
   if (users.length === 0) {

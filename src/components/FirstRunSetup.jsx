@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logoFull from "../assets/logo-full.jpg";
 
 export default function FirstRunSetup({ onSetup }) {
   const [name, setName] = useState("");
@@ -23,11 +24,8 @@ export default function FirstRunSetup({ onSetup }) {
     <div className="login-screen">
       <form className="login-card" onSubmit={submit}>
         <div className="login-brand">
-          <div className="brand-mark">TP</div>
-          <div>
-            <div className="login-brand-name">TaxOps Pro</div>
-            <div className="login-brand-sub">Chartered Accountant Practice Manager</div>
-          </div>
+          <img src={logoFull} alt="CSG & Associates" className="login-logo-full" />
+          <div className="login-brand-name">CSG's CRM</div>
         </div>
 
         <p className="login-prompt">
