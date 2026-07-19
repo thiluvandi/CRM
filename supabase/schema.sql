@@ -1,6 +1,8 @@
 -- TaxOps Pro — Supabase schema, RLS policies, and storage bucket.
--- No Supabase Auth is used: identity is picked via the app's "Simulate As"
--- dropdown, and permissions are enforced in the React app itself (not RLS).
+-- No Supabase Auth is used: on load the app shows a "who's logging in"
+-- picker, checks a SHA-256 password hash client-side, then remembers the
+-- device via localStorage. Permissions are enforced in the React app, not
+-- RLS — the anon key has open read/write access (see the note in section 3).
 -- Run this once in the Supabase SQL Editor (Project > SQL Editor > New query).
 -- Safe to re-run — every statement is idempotent.
 
@@ -14,6 +16,7 @@ create table if not exists profiles (
   name text not null,
   role text not null check (role in ('CA', 'Admin', 'Employee')),
   permissions text[] not null default '{}',
+  password_hash text,
   created_at timestamptz not null default now()
 );
 
@@ -45,7 +48,12 @@ alter table tasks enable row level security;
 
 -- ============================================================
 -- 3. RLS policies — open to the anon key; the app enforces who can
---    see/edit what based on the simulated user's permissions.
+--    see/edit what based on the logged-in user's permissions.
+--    NOTE: because select is open, password_hash IS technically readable
+--    by anyone with the (public, bundled-in-the-frontend) anon key — the
+--    app never bulk-fetches that column, only looks up one row's hash at
+--    login time, but this is a soft, office-internal gate, not a secure
+--    auth system. Treat it accordingly.
 -- ============================================================
 drop policy if exists "profiles_select_anon" on profiles;
 create policy "profiles_select_anon" on profiles for select using (true);
@@ -95,10 +103,7 @@ create policy "task_drafts_delete_anon" on storage.objects
   for delete using (bucket_id = 'task-drafts');
 
 -- ============================================================
--- 5. Seed data (optional — the app's "Add New Employee" form does this too)
+-- 5. Seed data — not needed. The app shows a first-run setup screen to
+--    create the first CA account (with a password) when profiles is empty,
+--    and "Add New Employee" handles everyone after that.
 -- ============================================================
--- insert into profiles (name, role, permissions) values
---   ('CA Chandrashekhar', 'CA', array['all']),
---   ('Admin Staff', 'Admin', array['all']),
---   ('Priya Sharma', 'Employee', array['view_assigned','update_task_status']),
---   ('Rahul Hegde', 'Employee', array['view_assigned','update_task_status']);

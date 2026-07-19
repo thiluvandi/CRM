@@ -5,16 +5,17 @@ const ROLE_OPTIONS = ["Employee", "Admin"];
 export default function AddEmployeeForm({ onAdd, onClose }) {
   const [name, setName] = useState("");
   const [role, setRole] = useState(ROLE_OPTIONS[0]);
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !password) return;
     setError("");
     setSubmitting(true);
     try {
-      await onAdd({ name: name.trim(), role });
+      await onAdd({ name: name.trim(), role, password });
       onClose();
     } catch (err) {
       setError(err.message);
@@ -39,6 +40,16 @@ export default function AddEmployeeForm({ onAdd, onClose }) {
               </option>
             ))}
           </select>
+        </label>
+        <label>
+          Set Password
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Give them this to log in"
+            required
+          />
         </label>
       </div>
       {error && <div className="form-error" style={{ marginTop: 12 }}>{error}</div>}

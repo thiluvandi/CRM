@@ -13,6 +13,122 @@
   border-radius: 8px;
 }
 
+/* Login / setup screens */
+.login-screen {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy-950);
+  padding: 24px;
+}
+
+.login-card {
+  background: var(--bg-surface);
+  border-radius: 14px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 50px rgba(11, 25, 48, 0.35);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.login-brand-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.login-brand-sub {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.login-prompt {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.login-card label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.login-card input {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.login-card .btn {
+  width: 100%;
+  padding: 11px;
+  font-size: 14px;
+}
+
+.login-back {
+  background: none;
+  border: none;
+  color: var(--teal-500);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.login-back:hover {
+  text-decoration: underline;
+}
+
+.user-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.user-picker-item:hover {
+  border-color: var(--teal-400);
+  background: var(--teal-100);
+}
+
+.user-picker-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
 .auth-loading-screen {
   min-height: 100svh;
   display: flex;
@@ -68,7 +184,7 @@
   color: #a9b6cc;
 }
 
-.simulate-control {
+.identity-bar {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -76,12 +192,9 @@
   color: #cbd5e1;
 }
 
-.simulate-control select {
-  background: var(--navy-800);
+.current-user-name {
+  font-weight: 600;
   color: #fff;
-  border: 1px solid var(--navy-700);
-  border-radius: 6px;
-  padding: 7px 10px;
 }
 
 .role-badge {

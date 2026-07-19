@@ -1,23 +1,30 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
-import { isAdminUser } from "./permissions";
+import { sha256Hex } from "./lib/hash";
 import TopBanner from "./components/TopBanner";
 import NavDrawer from "./components/NavDrawer";
 import OverviewPanel from "./components/OverviewPanel";
 import TasksHub from "./components/TasksHub";
 import UserManagement from "./components/UserManagement";
+import WhoIsLoggingIn from "./components/WhoIsLoggingIn";
+import FirstRunSetup from "./components/FirstRunSetup";
 import "./App.css";
+
+const REMEMBER_KEY = "taxops_current_user_id";
 
 export default function App() {
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [currentUserId, setCurrentUserId] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem(REMEMBER_KEY));
   const [activeTab, setActiveTab] = useState("overview");
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase.from("profiles").select("*").order("created_at");
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id,name,role,permissions,created_at")
+      .order("created_at");
     if (!error) setUsers(data);
   };
 
@@ -40,20 +47,58 @@ export default function App() {
     };
   }, []);
 
+  const currentUser = users.find((u) => u.id === currentUserId);
+
   useEffect(() => {
-    if (!currentUserId && users.length > 0) {
-      setCurrentUserId(users[0].id);
+    if (!loading && currentUserId && users.length > 0 && !currentUser) {
+      localStorage.removeItem(REMEMBER_KEY);
+      setCurrentUserId(null);
     }
-  }, [users, currentUserId]);
+  }, [loading, currentUserId, users, currentUser]);
 
-  const currentUser = users.find((u) => u.id === currentUserId) || users[0];
+  const handleCheckAccount = async (userId) => {
+    const { data } = await supabase.from("profiles").select("password_hash").eq("id", userId).single();
+    return { hasPassword: !!data?.password_hash };
+  };
 
-  const handleSwitchUser = (id) => {
-    setCurrentUserId(id);
-    const nextUser = users.find((u) => u.id === id);
-    if (nextUser && !isAdminUser(nextUser) && activeTab === "users") {
-      setActiveTab("tasks");
-    }
+  const handleAuthenticate = async (userId, password) => {
+    const { data, error } = await supabase.from("profiles").select("password_hash").eq("id", userId).single();
+    if (error || !data?.password_hash) return false;
+    const hash = await sha256Hex(password);
+    if (hash !== data.password_hash) return false;
+    localStorage.setItem(REMEMBER_KEY, userId);
+    setCurrentUserId(userId);
+    return true;
+  };
+
+  const handleSetInitialPassword = async (userId, password) => {
+    const passwordHash = await sha256Hex(password);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ password_hash: passwordHash })
+      .eq("id", userId)
+      .is("password_hash", null);
+    if (error) throw error;
+    localStorage.setItem(REMEMBER_KEY, userId);
+    setCurrentUserId(userId);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem(REMEMBER_KEY);
+    setCurrentUserId(null);
+    setActiveTab("overview");
+  };
+
+  const handleFirstRunSetup = async ({ name, password }) => {
+    const passwordHash = await sha256Hex(password);
+    const { data, error } = await supabase
+      .from("profiles")
+      .insert({ name, role: "CA", permissions: ["all"], password_hash: passwordHash })
+      .select()
+      .single();
+    if (error) throw error;
+    localStorage.setItem(REMEMBER_KEY, data.id);
+    setCurrentUserId(data.id);
   };
 
   const handleAddTask = async (taskDraft) => {
@@ -77,9 +122,18 @@ export default function App() {
     await supabase.from("profiles").update({ permissions }).eq("id", userId);
   };
 
-  const handleAddUser = async ({ name, role }) => {
+  const handleAddUser = async ({ name, role, password }) => {
+    const passwordHash = await sha256Hex(password);
     const permissions = role === "Admin" ? ["all"] : ["view_assigned", "update_task_status"];
-    const { error } = await supabase.from("profiles").insert({ name, role, permissions });
+    const { error } = await supabase
+      .from("profiles")
+      .insert({ name, role, permissions, password_hash: passwordHash });
+    if (error) throw error;
+  };
+
+  const handleResetPassword = async (userId, password) => {
+    const passwordHash = await sha256Hex(password);
+    const { error } = await supabase.from("profiles").update({ password_hash: passwordHash }).eq("id", userId);
     if (error) throw error;
   };
 
@@ -91,22 +145,24 @@ export default function App() {
     return <div className="auth-loading-screen">Loading TaxOps Pro…</div>;
   }
 
+  if (users.length === 0) {
+    return <FirstRunSetup onSetup={handleFirstRunSetup} />;
+  }
+
   if (!currentUser) {
     return (
-      <div className="auth-loading-screen">
-        No users found. Add a row to the "profiles" table in Supabase to get started.
-      </div>
+      <WhoIsLoggingIn
+        users={users}
+        onCheckAccount={handleCheckAccount}
+        onAuthenticate={handleAuthenticate}
+        onSetInitialPassword={handleSetInitialPassword}
+      />
     );
   }
 
   return (
     <div className="app-shell">
-      <TopBanner
-        users={users}
-        currentUser={currentUser}
-        onSwitchUser={handleSwitchUser}
-        onMenuClick={() => setMenuOpen(true)}
-      />
+      <TopBanner currentUser={currentUser} onLogout={handleLogout} onMenuClick={() => setMenuOpen(true)} />
       <NavDrawer
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -136,6 +192,7 @@ export default function App() {
             currentUser={currentUser}
             onTogglePermission={handleTogglePermission}
             onAddUser={handleAddUser}
+            onResetPassword={handleResetPassword}
             onDeleteUser={handleDeleteUser}
           />
         )}
