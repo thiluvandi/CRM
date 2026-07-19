@@ -1,0 +1,67 @@
+:root {
+  --navy-950: #0b1930;
+  --navy-900: #102544;
+  --navy-800: #16335e;
+  --navy-700: #1e4278;
+  --teal-500: #0d9488;
+  --teal-400: #14b8a6;
+  --teal-100: #ccfbf1;
+  --amber-500: #d97706;
+  --amber-100: #fef3c7;
+  --red-500: #dc2626;
+  --red-100: #fee2e2;
+  --green-600: #16a34a;
+  --green-100: #dcfce7;
+
+  --bg-page: #f4f6fa;
+  --bg-surface: #ffffff;
+  --bg-muted: #eef1f6;
+  --border: #dde2ea;
+  --text: #2c3444;
+  --text-muted: #64748b;
+  --text-h: #101828;
+
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  color-scheme: light;
+  color: var(--text);
+  background: var(--bg-page);
+  font: 15px/1.5 var(--sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1, h2, h3 {
+  font-family: var(--sans);
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button {
+  font: inherit;
+}
+
+input, select {
+  font: inherit;
+}
