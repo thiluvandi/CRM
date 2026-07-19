@@ -4,50 +4,23 @@ const ROLE_OPTIONS = ["Employee", "Admin"];
 
 export default function AddEmployeeForm({ onAdd, onClose }) {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [role, setRole] = useState(ROLE_OPTIONS[0]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState(null);
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !email.trim()) return;
+    if (!name.trim()) return;
     setError("");
     setSubmitting(true);
     try {
-      const tempPassword = await onAdd({ name: name.trim(), email: email.trim(), role });
-      setResult({ email: email.trim(), tempPassword });
+      await onAdd({ name: name.trim(), role });
+      onClose();
     } catch (err) {
       setError(err.message);
-    } finally {
       setSubmitting(false);
     }
   };
-
-  if (result) {
-    return (
-      <div className="inline-form">
-        <h3>Employee Added</h3>
-        <p className="scope-note" style={{ marginTop: 0 }}>
-          Share these sign-in details with {name.trim()} — this password is shown only once.
-        </p>
-        <div className="new-employee-credentials">
-          <div>
-            <strong>Email:</strong> {result.email}
-          </div>
-          <div>
-            <strong>Temporary password:</strong> {result.tempPassword}
-          </div>
-        </div>
-        <div className="inline-form-actions">
-          <button className="btn btn--primary btn--sm" onClick={onClose}>
-            Done
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <form className="inline-form" onSubmit={submit}>
@@ -56,16 +29,6 @@ export default function AddEmployeeForm({ onAdd, onClose }) {
         <label>
           Full Name
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Anjali Rao" required />
-        </label>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="anjali@taxopspro.com"
-            required
-          />
         </label>
         <label>
           Role
@@ -78,10 +41,10 @@ export default function AddEmployeeForm({ onAdd, onClose }) {
           </select>
         </label>
       </div>
-      {error && <div className="login-error" style={{ marginTop: 12 }}>{error}</div>}
+      {error && <div className="form-error" style={{ marginTop: 12 }}>{error}</div>}
       <div className="inline-form-actions">
         <button type="submit" className="btn btn--primary btn--sm" disabled={submitting}>
-          {submitting ? "Creating…" : "Add Employee"}
+          {submitting ? "Adding…" : "Add Employee"}
         </button>
         <button type="button" className="btn btn--ghost btn--sm" onClick={onClose}>Cancel</button>
       </div>

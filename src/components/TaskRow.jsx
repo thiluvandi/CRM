@@ -171,7 +171,7 @@ export default function TaskRow({ task, users, currentUser, canEditFields, canDe
             {uploading ? "Uploading…" : "📎 Upload Draft"}
           </button>
         )}
-        {uploadError && <div className="login-error" style={{ marginTop: 8 }}>{uploadError}</div>}
+        {uploadError && <div className="form-error" style={{ marginTop: 8 }}>{uploadError}</div>}
         <input type="file" ref={fileInputRef} className="draft-file-input" onChange={handleFileChange} />
       </div>
 

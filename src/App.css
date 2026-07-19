@@ -4,77 +4,13 @@
   min-height: 100svh;
 }
 
-/* Login screen */
-.login-screen {
-  min-height: 100svh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--navy-950);
-  padding: 24px;
-}
-
-.login-card {
-  background: var(--bg-surface);
-  border-radius: 14px;
-  padding: 32px 28px;
-  width: 100%;
-  max-width: 360px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  box-shadow: 0 20px 50px rgba(11, 25, 48, 0.35);
-}
-
-.login-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.login-brand-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-h);
-}
-
-.login-brand-sub {
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-
-.login-card label {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.login-card input {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--text);
-}
-
-.login-error {
+.form-error {
   background: var(--red-100);
   color: var(--red-500);
   font-size: 12.5px;
   font-weight: 500;
   padding: 8px 12px;
   border-radius: 8px;
-}
-
-.login-card .btn {
-  width: 100%;
-  padding: 11px;
-  font-size: 14px;
 }
 
 .auth-loading-screen {
@@ -85,6 +21,8 @@
   background: var(--bg-page);
   color: var(--text-muted);
   font-size: 14px;
+  text-align: center;
+  padding: 24px;
 }
 
 /* Top banner */
@@ -144,11 +82,6 @@
   border: 1px solid var(--navy-700);
   border-radius: 6px;
   padding: 7px 10px;
-}
-
-.current-user-name {
-  font-weight: 600;
-  color: #fff;
 }
 
 .role-badge {
@@ -907,17 +840,6 @@
   margin-top: 14px;
   display: flex;
   gap: 8px;
-}
-
-.new-employee-credentials {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-size: 13px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 
 /* User management */

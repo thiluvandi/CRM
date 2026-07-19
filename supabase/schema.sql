@@ -1,11 +1,16 @@
 -- TaxOps Pro — Supabase schema, RLS policies, and storage bucket.
+-- No Supabase Auth is used: identity is picked via the app's "Simulate As"
+-- dropdown, and permissions are enforced in the React app itself (not RLS).
 -- Run this once in the Supabase SQL Editor (Project > SQL Editor > New query).
+-- Safe to re-run — every statement is idempotent.
+
+create extension if not exists pgcrypto;
 
 -- ============================================================
--- 1. Profiles (extends auth.users with app-specific fields)
+-- 1. Profiles (standalone — not tied to any auth account)
 -- ============================================================
 create table if not exists profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
   name text not null,
   role text not null check (role in ('CA', 'Admin', 'Employee')),
   permissions text[] not null default '{}',
@@ -39,108 +44,61 @@ create table if not exists tasks (
 alter table tasks enable row level security;
 
 -- ============================================================
--- 3. Permission helper functions (read the caller's own profile)
+-- 3. RLS policies — open to the anon key; the app enforces who can
+--    see/edit what based on the simulated user's permissions.
 -- ============================================================
-create or replace function public.has_permission(perm text)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from profiles
-    where id = auth.uid()
-      and (permissions @> array['all'] or permissions @> array[perm])
-  );
-$$;
+drop policy if exists "profiles_select_anon" on profiles;
+create policy "profiles_select_anon" on profiles for select using (true);
 
-create or replace function public.is_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from profiles where id = auth.uid() and permissions @> array['all']
-  );
-$$;
+drop policy if exists "profiles_insert_anon" on profiles;
+create policy "profiles_insert_anon" on profiles for insert with check (true);
 
--- ============================================================
--- 4. RLS policies — profiles
--- ============================================================
-drop policy if exists "profiles_select_authenticated" on profiles;
-create policy "profiles_select_authenticated" on profiles
-  for select using (auth.role() = 'authenticated');
+drop policy if exists "profiles_update_anon" on profiles;
+create policy "profiles_update_anon" on profiles for update using (true);
 
-drop policy if exists "profiles_update_admin_or_self" on profiles;
-create policy "profiles_update_admin_or_self" on profiles
-  for update using (public.is_admin() or id = auth.uid());
+drop policy if exists "profiles_delete_anon" on profiles;
+create policy "profiles_delete_anon" on profiles for delete using (true);
 
-drop policy if exists "profiles_insert_admin" on profiles;
-create policy "profiles_insert_admin" on profiles
-  for insert with check (public.is_admin());
+drop policy if exists "tasks_select_anon" on tasks;
+create policy "tasks_select_anon" on tasks for select using (true);
 
-drop policy if exists "profiles_delete_admin" on profiles;
-create policy "profiles_delete_admin" on profiles
-  for delete using (public.is_admin());
+drop policy if exists "tasks_insert_anon" on tasks;
+create policy "tasks_insert_anon" on tasks for insert with check (true);
+
+drop policy if exists "tasks_update_anon" on tasks;
+create policy "tasks_update_anon" on tasks for update using (true);
+
+drop policy if exists "tasks_delete_anon" on tasks;
+create policy "tasks_delete_anon" on tasks for delete using (true);
 
 -- ============================================================
--- 5. RLS policies — tasks
--- ============================================================
-drop policy if exists "tasks_select_authenticated" on tasks;
-create policy "tasks_select_authenticated" on tasks
-  for select using (auth.role() = 'authenticated');
-
-drop policy if exists "tasks_insert_authenticated" on tasks;
-create policy "tasks_insert_authenticated" on tasks
-  for insert with check (auth.role() = 'authenticated');
-
--- Assignee can always update their own task (status + draft fields);
--- add_edit_tasks/all permission can update any task.
-drop policy if exists "tasks_update_assignee_or_editor" on tasks;
-create policy "tasks_update_assignee_or_editor" on tasks
-  for update using (
-    public.has_permission('add_edit_tasks') or assigned_to = auth.uid()
-  );
-
-drop policy if exists "tasks_delete_permitted" on tasks;
-create policy "tasks_delete_permitted" on tasks
-  for delete using (public.has_permission('delete_data'));
-
--- ============================================================
--- 6. Storage bucket for uploaded drafts (private — accessed via signed URLs)
+-- 4. Storage bucket for uploaded drafts (private — accessed via signed URLs)
 -- ============================================================
 insert into storage.buckets (id, name, public)
 values ('task-drafts', 'task-drafts', false)
 on conflict (id) do nothing;
 
-drop policy if exists "task_drafts_read_authenticated" on storage.objects;
-create policy "task_drafts_read_authenticated" on storage.objects
-  for select using (bucket_id = 'task-drafts' and auth.role() = 'authenticated');
+drop policy if exists "task_drafts_read_anon" on storage.objects;
+create policy "task_drafts_read_anon" on storage.objects
+  for select using (bucket_id = 'task-drafts');
 
-drop policy if exists "task_drafts_write_authenticated" on storage.objects;
-create policy "task_drafts_write_authenticated" on storage.objects
-  for insert with check (bucket_id = 'task-drafts' and auth.role() = 'authenticated');
+drop policy if exists "task_drafts_write_anon" on storage.objects;
+create policy "task_drafts_write_anon" on storage.objects
+  for insert with check (bucket_id = 'task-drafts');
 
-drop policy if exists "task_drafts_update_authenticated" on storage.objects;
-create policy "task_drafts_update_authenticated" on storage.objects
-  for update using (bucket_id = 'task-drafts' and auth.role() = 'authenticated');
+drop policy if exists "task_drafts_update_anon" on storage.objects;
+create policy "task_drafts_update_anon" on storage.objects
+  for update using (bucket_id = 'task-drafts');
 
-drop policy if exists "task_drafts_delete_authenticated" on storage.objects;
-create policy "task_drafts_delete_authenticated" on storage.objects
-  for delete using (bucket_id = 'task-drafts' and auth.role() = 'authenticated');
+drop policy if exists "task_drafts_delete_anon" on storage.objects;
+create policy "task_drafts_delete_anon" on storage.objects
+  for delete using (bucket_id = 'task-drafts');
 
 -- ============================================================
--- 7. Seed data
+-- 5. Seed data (optional — the app's "Add New Employee" form does this too)
 -- ============================================================
--- Auth users must exist first (Authentication > Users > Add user, or via the
--- app's "Add New Employee" form once it's running). Then insert their profile
--- row here, substituting each real auth user id:
---
--- insert into profiles (id, name, role, permissions) values
---   ('<uuid-of-ca-user>',    'CA Chandrashekhar', 'CA',    array['all']),
---   ('<uuid-of-admin-user>', 'Admin Staff',        'Admin', array['all']),
---   ('<uuid-of-priya>',      'Priya Sharma',       'Employee', array['view_assigned','update_task_status']),
---   ('<uuid-of-rahul>',      'Rahul Hegde',        'Employee', array['view_assigned','update_task_status']);
+-- insert into profiles (name, role, permissions) values
+--   ('CA Chandrashekhar', 'CA', array['all']),
+--   ('Admin Staff', 'Admin', array['all']),
+--   ('Priya Sharma', 'Employee', array['view_assigned','update_task_status']),
+--   ('Rahul Hegde', 'Employee', array['view_assigned','update_task_status']);

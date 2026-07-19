@@ -1,31 +1,20 @@
 import { useEffect, useState } from "react";
-import { supabase, supabaseSignupClient } from "./supabaseClient";
+import { supabase } from "./supabaseClient";
+import { isAdminUser } from "./permissions";
 import TopBanner from "./components/TopBanner";
 import NavDrawer from "./components/NavDrawer";
 import OverviewPanel from "./components/OverviewPanel";
 import TasksHub from "./components/TasksHub";
 import UserManagement from "./components/UserManagement";
-import Login from "./components/Login";
 import "./App.css";
 
-function generateTempPassword() {
-  return `Tp${Math.random().toString(36).slice(2, 8)}${Math.floor(Math.random() * 90 + 10)}!`;
-}
-
 export default function App() {
-  const [session, setSession] = useState(undefined);
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-    });
-    return () => listener.subscription.unsubscribe();
-  }, []);
+  const [loading, setLoading] = useState(true);
 
   const fetchUsers = async () => {
     const { data, error } = await supabase.from("profiles").select("*").order("created_at");
@@ -38,13 +27,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (!session) {
-      setUsers([]);
-      setTasks([]);
-      return;
-    }
-    fetchUsers();
-    fetchTasks();
+    Promise.all([fetchUsers(), fetchTasks()]).then(() => setLoading(false));
 
     const channel = supabase
       .channel("taxops-changes")
@@ -55,11 +38,23 @@ export default function App() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session]);
+  }, []);
 
-  const currentUser = session ? users.find((u) => u.id === session.user.id) : null;
+  useEffect(() => {
+    if (!currentUserId && users.length > 0) {
+      setCurrentUserId(users[0].id);
+    }
+  }, [users, currentUserId]);
 
-  const handleSignOut = () => supabase.auth.signOut();
+  const currentUser = users.find((u) => u.id === currentUserId) || users[0];
+
+  const handleSwitchUser = (id) => {
+    setCurrentUserId(id);
+    const nextUser = users.find((u) => u.id === id);
+    if (nextUser && !isAdminUser(nextUser) && activeTab === "users") {
+      setActiveTab("tasks");
+    }
+  };
 
   const handleAddTask = async (taskDraft) => {
     await supabase.from("tasks").insert(taskDraft);
@@ -82,46 +77,36 @@ export default function App() {
     await supabase.from("profiles").update({ permissions }).eq("id", userId);
   };
 
-  const handleAddUser = async ({ name, email, role }) => {
-    const tempPassword = generateTempPassword();
-    const { data, error } = await supabaseSignupClient.auth.signUp({ email, password: tempPassword });
-    if (error) throw error;
+  const handleAddUser = async ({ name, role }) => {
     const permissions = role === "Admin" ? ["all"] : ["view_assigned", "update_task_status"];
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .insert({ id: data.user.id, name, role, permissions });
-    if (profileError) throw profileError;
-    return tempPassword;
+    const { error } = await supabase.from("profiles").insert({ name, role, permissions });
+    if (error) throw error;
   };
 
   const handleDeleteUser = async (userId) => {
     await supabase.from("profiles").delete().eq("id", userId);
   };
 
-  if (session === undefined) {
+  if (loading) {
     return <div className="auth-loading-screen">Loading TaxOps Pro…</div>;
-  }
-
-  if (!session) {
-    return <Login />;
   }
 
   if (!currentUser) {
     return (
       <div className="auth-loading-screen">
-        <div style={{ textAlign: "center" }}>
-          <p>No profile found for this account. Ask an Admin to provision access.</p>
-          <button className="btn btn--ghost btn--sm" onClick={handleSignOut} style={{ marginTop: 12 }}>
-            Sign Out
-          </button>
-        </div>
+        No users found. Add a row to the "profiles" table in Supabase to get started.
       </div>
     );
   }
 
   return (
     <div className="app-shell">
-      <TopBanner currentUser={currentUser} onSignOut={handleSignOut} onMenuClick={() => setMenuOpen(true)} />
+      <TopBanner
+        users={users}
+        currentUser={currentUser}
+        onSwitchUser={handleSwitchUser}
+        onMenuClick={() => setMenuOpen(true)}
+      />
       <NavDrawer
         open={menuOpen}
         onClose={() => setMenuOpen(false)}

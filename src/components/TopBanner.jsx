@@ -1,6 +1,6 @@
 import { isAdminUser } from "../permissions";
 
-export default function TopBanner({ currentUser, onSignOut, onMenuClick }) {
+export default function TopBanner({ users, currentUser, onSwitchUser, onMenuClick }) {
   return (
     <header className="top-banner">
       <div className="brand">
@@ -17,13 +17,17 @@ export default function TopBanner({ currentUser, onSignOut, onMenuClick }) {
       </div>
 
       <div className="simulate-control">
-        <span className="current-user-name">{currentUser.name}</span>
+        <label htmlFor="simulate-as">Simulate As:</label>
+        <select id="simulate-as" value={currentUser.id} onChange={(e) => onSwitchUser(e.target.value)}>
+          {users.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name} — {u.role}
+            </option>
+          ))}
+        </select>
         <span className={`role-badge ${isAdminUser(currentUser) ? "role-badge--admin" : "role-badge--staff"}`}>
-          {currentUser.role}
+          {isAdminUser(currentUser) ? "Full Access" : "Restricted"}
         </span>
-        <button className="btn btn--ghost btn--sm" onClick={onSignOut}>
-          Sign Out
-        </button>
       </div>
     </header>
   );

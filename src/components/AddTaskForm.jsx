@@ -55,7 +55,7 @@ export default function AddTaskForm({ users, onAdd, onClose }) {
           <input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} required />
         </label>
       </div>
-      {error && <div className="login-error" style={{ marginTop: 12 }}>{error}</div>}
+      {error && <div className="form-error" style={{ marginTop: 12 }}>{error}</div>}
       <div className="inline-form-actions">
         <button type="submit" className="btn btn--primary btn--sm" disabled={submitting}>
           {submitting ? "Adding…" : "Add Task"}

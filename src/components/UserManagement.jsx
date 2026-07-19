@@ -16,10 +16,7 @@ export default function UserManagement({ users, currentUser, onTogglePermission,
       <div className="panel-header-row">
         <div>
           <h2 className="panel-title">User Management</h2>
-          <p className="panel-sub">
-            Manage staff roles and granular permissions. Deleting a user removes their app access only — their
-            Supabase login must be removed separately from the Authentication dashboard if needed.
-          </p>
+          <p className="panel-sub">Manage staff roles and granular permissions.</p>
         </div>
         <button className="btn btn--primary" onClick={() => setShowAddForm((s) => !s)}>
           {showAddForm ? "Close" : "+ Add New Employee"}
@@ -81,7 +78,7 @@ export default function UserManagement({ users, currentUser, onTogglePermission,
                           if (window.confirm(`Remove ${u.name} from the roster?`)) onDeleteUser(u.id);
                         }}
                         disabled={isSelf}
-                        title={isSelf ? "You cannot remove your own account" : "Delete User"}
+                        title={isSelf ? "You cannot delete the user you are simulating" : "Delete User"}
                       >
                         Delete
                       </button>
