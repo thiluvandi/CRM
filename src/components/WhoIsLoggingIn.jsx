@@ -61,7 +61,7 @@ export default function WhoIsLoggingIn({ users, onCheckAccount, onAuthenticate, 
 
   return (
     <div className="login-screen">
-      <div className="login-card">
+      <div className={`login-card ${!selectedUser ? "login-card--wide" : ""}`}>
         <div className="login-brand">
           <img src={logoFull} alt="CSG & Associates" className="login-logo-full" />
           <div className="login-brand-name">CSG's CRM</div>

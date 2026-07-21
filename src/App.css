@@ -33,6 +33,11 @@
   flex-direction: column;
   gap: 16px;
   box-shadow: 0 20px 50px rgba(11, 25, 48, 0.35);
+  transition: max-width 0.2s ease;
+}
+
+.login-card--wide {
+  max-width: 1100px;
 }
 
 .login-brand {
