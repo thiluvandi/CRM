@@ -1,0 +1,57 @@
+import { useRef, useState } from "react";
+import { isAdminUser } from "../permissions";
+import OverviewPanel from "./OverviewPanel";
+import TasksHub from "./TasksHub";
+
+export default function Dashboard({ users, tasks, currentUser, onAddTask, onUpdateTask, onDeleteTask }) {
+  const [filter, setFilter] = useState({ status: null, assignedTo: null });
+  const tasksRef = useRef(null);
+
+  const scrollToTasks = () => {
+    tasksRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleSelectStatus = (status) => {
+    setFilter({ status, assignedTo: null });
+    scrollToTasks();
+  };
+
+  const handleSelectTotal = () => {
+    setFilter({ status: null, assignedTo: null });
+    scrollToTasks();
+  };
+
+  const handleSelectEmployee = (userId) => {
+    setFilter({ status: null, assignedTo: userId });
+    scrollToTasks();
+  };
+
+  const clearFilter = () => setFilter({ status: null, assignedTo: null });
+
+  return (
+    <div className="dashboard-stack">
+      {isAdminUser(currentUser) && (
+        <OverviewPanel
+          users={users}
+          tasks={tasks}
+          onSelectStatus={handleSelectStatus}
+          onSelectTotal={handleSelectTotal}
+          onSelectEmployee={handleSelectEmployee}
+        />
+      )}
+
+      <div ref={tasksRef}>
+        <TasksHub
+          users={users}
+          tasks={tasks}
+          currentUser={currentUser}
+          filter={filter}
+          onClearFilter={clearFilter}
+          onAddTask={onAddTask}
+          onUpdateTask={onUpdateTask}
+          onDeleteTask={onDeleteTask}
+        />
+      </div>
+    </div>
+  );
+}

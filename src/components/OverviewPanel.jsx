@@ -1,11 +1,12 @@
 import { isAdminUser } from "../permissions";
 
-export default function OverviewPanel({ users, tasks }) {
+export default function OverviewPanel({ users, tasks, onSelectStatus, onSelectTotal, onSelectEmployee }) {
   const pendingCount = tasks.filter((t) => t.status === "Pending").length;
   const completedCount = tasks.filter((t) => t.status === "Completed").length;
 
   const staff = users.filter((u) => !isAdminUser(u));
   const loadByEmployee = staff.map((u) => ({
+    id: u.id,
     name: u.name,
     role: u.role,
     count: tasks.filter((t) => t.assigned_to === u.id).length,
@@ -17,28 +18,28 @@ export default function OverviewPanel({ users, tasks }) {
   return (
     <div className="panel">
       <h2 className="panel-title">Overview Panel</h2>
-      <p className="panel-sub">Firm-wide monitoring across all clients and staff.</p>
+      <p className="panel-sub">Firm-wide monitoring across all clients and staff. Click any metric to jump to those tasks below.</p>
 
       <div className="metric-cards">
-        <div className="metric-card metric-card--pending">
+        <button type="button" className="metric-card metric-card--pending metric-card--clickable" onClick={() => onSelectStatus("Pending")}>
           <div className="metric-label">Total Pending Tasks</div>
           <div className="metric-value">{pendingCount}</div>
-        </div>
-        <div className="metric-card metric-card--completed">
+        </button>
+        <button type="button" className="metric-card metric-card--completed metric-card--clickable" onClick={() => onSelectStatus("Completed")}>
           <div className="metric-label">Completed Tasks</div>
           <div className="metric-value">{completedCount}</div>
-        </div>
-        <div className="metric-card metric-card--total">
+        </button>
+        <button type="button" className="metric-card metric-card--total metric-card--clickable" onClick={onSelectTotal}>
           <div className="metric-label">Total Tasks</div>
           <div className="metric-value">{tasks.length}</div>
-        </div>
+        </button>
       </div>
 
       <div className="section-block">
         <h3>Task Load per Employee</h3>
         <div className="load-list">
           {loadByEmployee.map((l) => (
-            <div className="load-row" key={l.name}>
+            <button type="button" className="load-row load-row--clickable" key={l.id} onClick={() => onSelectEmployee(l.id)}>
               <div className="load-name">
                 {l.name}
                 <span className="load-role">{l.role}</span>
@@ -47,7 +48,7 @@ export default function OverviewPanel({ users, tasks }) {
                 <div className="load-bar-fill" style={{ width: `${(l.count / maxLoad) * 100}%` }} />
               </div>
               <div className="load-count">{l.count}</div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -70,7 +71,7 @@ export default function OverviewPanel({ users, tasks }) {
                 const overdue = t.status !== "Completed" && new Date(t.deadline) < today;
                 const assigneeName = users.find((u) => u.id === t.assigned_to)?.name || "Unassigned";
                 return (
-                  <tr key={t.id}>
+                  <tr key={t.id} className="grid-row--clickable" onClick={() => onSelectEmployee(t.assigned_to)}>
                     <td>{t.client}</td>
                     <td>{t.task_type}</td>
                     <td>{assigneeName}</td>

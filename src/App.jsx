@@ -3,8 +3,7 @@ import { supabase } from "./supabaseClient";
 import { sha256Hex } from "./lib/hash";
 import TopBanner from "./components/TopBanner";
 import NavDrawer from "./components/NavDrawer";
-import OverviewPanel from "./components/OverviewPanel";
-import TasksHub from "./components/TasksHub";
+import Dashboard from "./components/Dashboard";
 import UserManagement from "./components/UserManagement";
 import WhoIsLoggingIn from "./components/WhoIsLoggingIn";
 import FirstRunSetup from "./components/FirstRunSetup";
@@ -16,7 +15,7 @@ export default function App() {
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem(REMEMBER_KEY));
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -86,7 +85,7 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem(REMEMBER_KEY);
     setCurrentUserId(null);
-    setActiveTab("overview");
+    setActiveTab("dashboard");
   };
 
   const handleFirstRunSetup = async ({ name, password }) => {
@@ -187,9 +186,8 @@ export default function App() {
       />
 
       <main className="main-canvas">
-        {activeTab === "overview" && <OverviewPanel users={users} tasks={tasks} />}
-        {activeTab === "tasks" && (
-          <TasksHub
+        {activeTab === "dashboard" && (
+          <Dashboard
             users={users}
             tasks={tasks}
             currentUser={currentUser}

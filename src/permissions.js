@@ -1,5 +1,4 @@
 export const PERMISSION_TOGGLES = [
-  { key: "view_all_tasks", label: "View All Tasks" },
   { key: "add_edit_tasks", label: "Add/Edit Tasks" },
   { key: "delete_data", label: "Delete Data" },
 ];
@@ -13,7 +12,7 @@ export function hasPermission(user, key) {
 }
 
 export function canViewAllTasks(user) {
-  return hasPermission(user, "view_all_tasks");
+  return isAdminUser(user);
 }
 
 export function canAddEditTasks(user) {

@@ -417,6 +417,19 @@
   border: 1px solid var(--border);
 }
 
+.metric-card--clickable {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.metric-card--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(11, 25, 48, 0.1);
+}
+
 .metric-card--pending {
   background: var(--amber-100);
   border-color: #fcd9a8;
@@ -459,6 +472,23 @@
   grid-template-columns: 180px 1fr 30px;
   align-items: center;
   gap: 12px;
+}
+
+.load-row--clickable {
+  width: 100%;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.load-row--clickable:hover {
+  background: var(--bg-muted);
+  border-color: var(--border);
 }
 
 .load-name {
@@ -529,6 +559,15 @@
   border-bottom: none;
 }
 
+.grid-row--clickable {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.grid-row--clickable:hover td {
+  background: var(--bg-muted);
+}
+
 .overdue-date {
   color: var(--red-500);
   font-weight: 600;
@@ -552,6 +591,30 @@
 .status-pill--completed {
   background: var(--green-100);
   color: #166534;
+}
+
+/* Dashboard (combined Overview + Tasks) */
+.dashboard-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filter-chip-row {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  background: var(--navy-900);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
 }
 
 /* Scope note */
