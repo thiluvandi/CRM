@@ -1,5 +1,5 @@
 import { isAdminUser } from "../permissions";
-import logoIcon from "../assets/logo-icon.png";
+import logoFull from "../assets/logo-full.jpg";
 
 export default function TopBanner({ currentUser, onLogout, onMenuClick }) {
   return (
@@ -10,7 +10,7 @@ export default function TopBanner({ currentUser, onLogout, onMenuClick }) {
           <span />
           <span />
         </button>
-        <img src={logoIcon} alt="CSG & Associates" className="brand-mark" />
+        <img src={logoFull} alt="CSG & Associates" className="brand-mark" />
         <div>
           <div className="brand-name">CSG's CRM</div>
           <div className="brand-sub">CSG & Associates — Chartered Accountants</div>

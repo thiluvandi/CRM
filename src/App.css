@@ -215,11 +215,12 @@
 }
 
 .brand-mark {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  height: 60px;
+  width: auto;
+  border-radius: 10px;
   background: #fff;
-  object-fit: cover;
+  padding: 5px 10px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
@@ -1413,6 +1414,16 @@
   }
   .brand-logo-caption {
     font-size: 17px;
+  }
+  .top-banner {
+    padding: 12px 16px;
+  }
+  .brand-mark {
+    height: 46px;
+  }
+  /* The logo already carries this line — dropping it keeps the banner short */
+  .brand-sub {
+    display: none;
   }
   .user-picker-list {
     grid-template-columns: 1fr;
