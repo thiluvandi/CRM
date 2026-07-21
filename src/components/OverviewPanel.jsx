@@ -51,7 +51,7 @@ export default function OverviewPanel({ users, tasks, currentUser, onSelectStatu
 
       {admin && (
         <div className="section-block">
-          <h3>Task Load per Employee</h3>
+          <h3>Tasks per Employee</h3>
           <p className="section-hint">Hover a name for their task breakdown, click to see their tasks below.</p>
           <div className="load-chip-row">
             {loadByEmployee.map((l) => (
