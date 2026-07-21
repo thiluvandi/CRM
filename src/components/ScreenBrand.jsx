@@ -1,4 +1,4 @@
-import logoFull from "../assets/logo-full.jpg";
+import logoFull from "../assets/logo-full.png";
 
 export default function ScreenBrand() {
   return (

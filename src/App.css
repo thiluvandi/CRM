@@ -200,18 +200,15 @@
 .top-banner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-start;
+  gap: 12px;
   padding: 14px 28px;
   background: var(--navy-950);
   color: #fff;
-  flex-wrap: wrap;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.brand-text {
+  min-width: 0;
 }
 
 .brand-mark {
@@ -237,16 +234,60 @@
 }
 
 .identity-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  position: relative;
   font-size: 13px;
   color: #cbd5e1;
+}
+
+.identity-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.identity-toggle:hover {
+  background: var(--navy-800);
 }
 
 .current-user-name {
   font-weight: 600;
   color: #fff;
+  white-space: nowrap;
+}
+
+.identity-caret {
+  width: 0;
+  height: 0;
+  border-left: 4.5px solid transparent;
+  border-right: 4.5px solid transparent;
+  border-top: 5px solid #cbd5e1;
+  transition: transform 0.15s ease;
+}
+
+.identity-caret--up {
+  transform: rotate(180deg);
+}
+
+.identity-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(11, 25, 48, 0.22);
 }
 
 .role-badge {
@@ -1424,6 +1465,14 @@
   /* The logo already carries this line — dropping it keeps the banner short */
   .brand-sub {
     display: none;
+  }
+  .identity-bar {
+    margin-left: auto;
+  }
+  /* Toggle sits near the right edge here, so anchor the panel to it */
+  .identity-menu {
+    left: auto;
+    right: 0;
   }
   .user-picker-list {
     grid-template-columns: 1fr;
