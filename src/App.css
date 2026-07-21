@@ -19,31 +19,45 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  /* Keeps the top of the stack reachable when it outgrows the viewport */
+  justify-content: safe center;
   background: var(--navy-950);
   padding: 24px;
   gap: 24px;
 }
 
 .login-screen-brand {
-  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 460px;
 }
 
 .brand-logo-full {
   display: block;
-  height: 80px;
+  height: 140px;
   width: auto;
   max-width: 100%;
   background: #fff;
-  border-radius: 10px;
-  padding: 6px 10px;
+  border-radius: 12px;
+  padding: 10px 18px;
   object-fit: contain;
+}
+
+.brand-logo-caption {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #fff;
 }
 
 .login-card {
   background: var(--bg-surface);
   border-radius: 14px;
   padding: 32px 28px;
-  margin: auto;
   width: 100%;
   max-width: 460px;
   display: flex;
@@ -1394,7 +1408,10 @@
     padding: 24px 18px;
   }
   .brand-logo-full {
-    height: 48px;
+    height: 100px;
+  }
+  .brand-logo-caption {
+    font-size: 17px;
   }
   .user-picker-list {
     grid-template-columns: 1fr;
