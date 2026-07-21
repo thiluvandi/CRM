@@ -102,15 +102,21 @@ export default function App() {
   };
 
   const handleAddTask = async (taskDraft) => {
-    await supabase.from("tasks").insert(taskDraft);
+    const { error } = await supabase.from("tasks").insert(taskDraft);
+    if (error) throw error;
+    await fetchTasks();
   };
 
   const handleUpdateTask = async (taskId, updates) => {
-    await supabase.from("tasks").update(updates).eq("id", taskId);
+    const { error } = await supabase.from("tasks").update(updates).eq("id", taskId);
+    if (error) throw error;
+    await fetchTasks();
   };
 
   const handleDeleteTask = async (taskId) => {
-    await supabase.from("tasks").delete().eq("id", taskId);
+    const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+    if (error) throw error;
+    await fetchTasks();
   };
 
   const handleTogglePermission = async (userId, key, checked) => {
@@ -119,7 +125,9 @@ export default function App() {
     const permissions = checked
       ? [...new Set([...target.permissions, key])]
       : target.permissions.filter((p) => p !== key);
-    await supabase.from("profiles").update({ permissions }).eq("id", userId);
+    const { error } = await supabase.from("profiles").update({ permissions }).eq("id", userId);
+    if (error) throw error;
+    await fetchUsers();
   };
 
   const handleAddUser = async ({ name, role, password }) => {
@@ -129,16 +137,20 @@ export default function App() {
       .from("profiles")
       .insert({ name, role, permissions, password_hash: passwordHash });
     if (error) throw error;
+    await fetchUsers();
   };
 
   const handleResetPassword = async (userId, password) => {
     const passwordHash = await sha256Hex(password);
     const { error } = await supabase.from("profiles").update({ password_hash: passwordHash }).eq("id", userId);
     if (error) throw error;
+    await fetchUsers();
   };
 
   const handleDeleteUser = async (userId) => {
-    await supabase.from("profiles").delete().eq("id", userId);
+    const { error } = await supabase.from("profiles").delete().eq("id", userId);
+    if (error) throw error;
+    await fetchUsers();
   };
 
   if (loading) {
