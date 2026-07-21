@@ -17,16 +17,33 @@
 .login-screen {
   min-height: 100svh;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   background: var(--navy-950);
   padding: 24px;
+  gap: 24px;
+}
+
+.login-screen-brand {
+  align-self: flex-start;
+}
+
+.brand-logo-full {
+  display: block;
+  height: 80px;
+  width: auto;
+  max-width: 100%;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  object-fit: contain;
 }
 
 .login-card {
   background: var(--bg-surface);
   border-radius: 14px;
   padding: 32px 28px;
+  margin: auto;
   width: 100%;
   max-width: 460px;
   display: flex;
@@ -38,28 +55,6 @@
 
 .login-card--wide {
   max-width: 1100px;
-}
-
-.login-brand {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-.login-logo-full {
-  width: 100%;
-  max-width: 220px;
-  height: auto;
-}
-
-.login-brand-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
 }
 
 .login-prompt {
@@ -109,17 +104,16 @@
 }
 
 .user-picker-list {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
 }
 
 .user-picker-item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 0fr;
+  justify-items: start;
   background: var(--bg-muted);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -127,17 +121,52 @@
   cursor: pointer;
   text-align: left;
   font: inherit;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease,
+    background 0.15s ease, grid-template-rows 0.15s ease;
 }
 
-.user-picker-item:hover {
+.user-picker-item:hover,
+.user-picker-item:focus-visible {
   border-color: var(--teal-400);
   background: var(--teal-100);
+  z-index: 2;
+  box-shadow: 0 10px 24px rgba(11, 25, 48, 0.18);
+  grid-template-rows: auto 1fr;
 }
 
 .user-picker-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-h);
+}
+
+/* Collapsed until hover so the card has no dead space underneath the name */
+.user-picker-role-slot {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.user-picker-role {
+  display: inline-block;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.user-picker-item:hover .user-picker-role,
+.user-picker-item:focus-visible .user-picker-role {
+  opacity: 1;
+}
+
+/* Touch devices have no hover — always show the role there */
+@media (hover: none) {
+  .user-picker-item {
+    grid-template-rows: auto 1fr;
+  }
+
+  .user-picker-role {
+    opacity: 1;
+  }
 }
 
 .auth-loading-screen {
@@ -1356,5 +1385,18 @@
   }
   .panel {
     padding: 18px;
+  }
+  .login-screen {
+    padding: 16px;
+    gap: 16px;
+  }
+  .login-card {
+    padding: 24px 18px;
+  }
+  .brand-logo-full {
+    height: 48px;
+  }
+  .user-picker-list {
+    grid-template-columns: 1fr;
   }
 }

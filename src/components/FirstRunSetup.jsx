@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logoFull from "../assets/logo-full.jpg";
+import ScreenBrand from "./ScreenBrand";
 
 export default function FirstRunSetup({ onSetup }) {
   const [name, setName] = useState("");
@@ -22,12 +22,8 @@ export default function FirstRunSetup({ onSetup }) {
 
   return (
     <div className="login-screen">
+      <ScreenBrand />
       <form className="login-card" onSubmit={submit}>
-        <div className="login-brand">
-          <img src={logoFull} alt="CSG & Associates" className="login-logo-full" />
-          <div className="login-brand-name">CSG's CRM</div>
-        </div>
-
         <p className="login-prompt">
           No accounts exist yet — set up the first one. This will be the CA account with full access; add everyone
           else afterward from User Management.

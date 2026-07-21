@@ -1,5 +1,5 @@
 import { useState } from "react";
-import logoFull from "../assets/logo-full.jpg";
+import ScreenBrand from "./ScreenBrand";
 
 export default function WhoIsLoggingIn({ users, onCheckAccount, onAuthenticate, onSetInitialPassword }) {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -61,12 +61,8 @@ export default function WhoIsLoggingIn({ users, onCheckAccount, onAuthenticate, 
 
   return (
     <div className="login-screen">
+      <ScreenBrand />
       <div className={`login-card ${!selectedUser ? "login-card--wide" : ""}`}>
-        <div className="login-brand">
-          <img src={logoFull} alt="CSG & Associates" className="login-logo-full" />
-          <div className="login-brand-name">CSG's CRM</div>
-        </div>
-
         {!selectedUser ? (
           <>
             <p className="login-prompt">Who's logging in?</p>
@@ -74,7 +70,9 @@ export default function WhoIsLoggingIn({ users, onCheckAccount, onAuthenticate, 
               {users.map((u) => (
                 <button key={u.id} type="button" className="user-picker-item" onClick={() => selectUser(u)}>
                   <span className="user-picker-name">{u.name}</span>
-                  <span className="role-tag">{u.role}</span>
+                  <span className="user-picker-role-slot">
+                    <span className="role-tag user-picker-role">{u.role}</span>
+                  </span>
                 </button>
               ))}
             </div>
