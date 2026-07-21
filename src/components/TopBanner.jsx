@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { isAdminUser } from "../permissions";
-import logoFull from "../assets/logo-full.png";
+import logoWordmark from "../assets/logo-full CA removed.png";
 
 export default function TopBanner({ currentUser, onLogout, onMenuClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -30,7 +30,7 @@ export default function TopBanner({ currentUser, onLogout, onMenuClick }) {
         <span />
       </button>
 
-      <img src={logoFull} alt="CSG & Associates" className="brand-mark" />
+      <img src={logoWordmark} alt="CSG & Associates" className="brand-mark" />
 
       <div className="brand-text">
         <div className="brand-name">CSG's CRM</div>
