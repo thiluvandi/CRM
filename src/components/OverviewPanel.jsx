@@ -1,6 +1,8 @@
 import { isAdminUser } from "../permissions";
 
-export default function OverviewPanel({ users, tasks, onSelectStatus, onSelectTotal, onSelectEmployee }) {
+export default function OverviewPanel({ users, tasks, currentUser, onSelectStatus, onSelectTotal, onSelectEmployee }) {
+  const admin = isAdminUser(currentUser);
+
   const pendingCount = tasks.filter((t) => t.status === "Pending").length;
   const completedCount = tasks.filter((t) => t.status === "Completed").length;
 
@@ -18,43 +20,49 @@ export default function OverviewPanel({ users, tasks, onSelectStatus, onSelectTo
   return (
     <div className="panel">
       <h2 className="panel-title">Overview Panel</h2>
-      <p className="panel-sub">Firm-wide monitoring across all clients and staff. Click any metric to jump to those tasks below.</p>
+      <p className="panel-sub">
+        {admin
+          ? "Firm-wide monitoring across all clients and staff. Click any metric to jump to those tasks below."
+          : "Your task summary. Click any metric to jump to those tasks below."}
+      </p>
 
       <div className="metric-cards">
         <button type="button" className="metric-card metric-card--pending metric-card--clickable" onClick={() => onSelectStatus("Pending")}>
-          <div className="metric-label">Total Pending Tasks</div>
+          <div className="metric-label">{admin ? "Total Pending Tasks" : "Your Pending Tasks"}</div>
           <div className="metric-value">{pendingCount}</div>
         </button>
         <button type="button" className="metric-card metric-card--completed metric-card--clickable" onClick={() => onSelectStatus("Completed")}>
-          <div className="metric-label">Completed Tasks</div>
+          <div className="metric-label">{admin ? "Completed Tasks" : "Your Completed Tasks"}</div>
           <div className="metric-value">{completedCount}</div>
         </button>
         <button type="button" className="metric-card metric-card--total metric-card--clickable" onClick={onSelectTotal}>
-          <div className="metric-label">Total Tasks</div>
+          <div className="metric-label">{admin ? "Total Tasks" : "Your Total Tasks"}</div>
           <div className="metric-value">{tasks.length}</div>
         </button>
       </div>
 
-      <div className="section-block">
-        <h3>Task Load per Employee</h3>
-        <div className="load-list">
-          {loadByEmployee.map((l) => (
-            <button type="button" className="load-row load-row--clickable" key={l.id} onClick={() => onSelectEmployee(l.id)}>
-              <div className="load-name">
-                {l.name}
-                <span className="load-role">{l.role}</span>
-              </div>
-              <div className="load-bar-track">
-                <div className="load-bar-fill" style={{ width: `${(l.count / maxLoad) * 100}%` }} />
-              </div>
-              <div className="load-count">{l.count}</div>
-            </button>
-          ))}
+      {admin && (
+        <div className="section-block">
+          <h3>Task Load per Employee</h3>
+          <div className="load-list">
+            {loadByEmployee.map((l) => (
+              <button type="button" className="load-row load-row--clickable" key={l.id} onClick={() => onSelectEmployee(l.id)}>
+                <div className="load-name">
+                  {l.name}
+                  <span className="load-role">{l.role}</span>
+                </div>
+                <div className="load-bar-track">
+                  <div className="load-bar-fill" style={{ width: `${(l.count / maxLoad) * 100}%` }} />
+                </div>
+                <div className="load-count">{l.count}</div>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="section-block">
-        <h3>Tracking Grid</h3>
+        <h3>{admin ? "Tracking Grid" : "Your Tasks"}</h3>
         <div className="table-wrap">
           <table className="grid-table">
             <thead>

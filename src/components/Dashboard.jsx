@@ -7,6 +7,9 @@ export default function Dashboard({ users, tasks, currentUser, onAddTask, onUpda
   const [filter, setFilter] = useState({ status: null, assignedTo: null });
   const tasksRef = useRef(null);
 
+  const admin = isAdminUser(currentUser);
+  const overviewTasks = admin ? tasks : tasks.filter((t) => t.assigned_to === currentUser.id);
+
   const scrollToTasks = () => {
     tasksRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -30,15 +33,14 @@ export default function Dashboard({ users, tasks, currentUser, onAddTask, onUpda
 
   return (
     <div className="dashboard-stack">
-      {isAdminUser(currentUser) && (
-        <OverviewPanel
-          users={users}
-          tasks={tasks}
-          onSelectStatus={handleSelectStatus}
-          onSelectTotal={handleSelectTotal}
-          onSelectEmployee={handleSelectEmployee}
-        />
-      )}
+      <OverviewPanel
+        users={users}
+        tasks={overviewTasks}
+        currentUser={currentUser}
+        onSelectStatus={handleSelectStatus}
+        onSelectTotal={handleSelectTotal}
+        onSelectEmployee={handleSelectEmployee}
+      />
 
       <div ref={tasksRef}>
         <TasksHub
