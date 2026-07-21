@@ -235,6 +235,7 @@
 
 .identity-bar {
   position: relative;
+  margin-left: auto;
   font-size: 13px;
   color: #cbd5e1;
 }
@@ -278,7 +279,7 @@
 .identity-menu {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  right: 0;
   z-index: 30;
   display: flex;
   align-items: center;
@@ -1465,14 +1466,6 @@
   /* The logo already carries this line — dropping it keeps the banner short */
   .brand-sub {
     display: none;
-  }
-  .identity-bar {
-    margin-left: auto;
-  }
-  /* Toggle sits near the right edge here, so anchor the panel to it */
-  .identity-menu {
-    left: auto;
-    right: 0;
   }
   .user-picker-list {
     grid-template-columns: 1fr;
