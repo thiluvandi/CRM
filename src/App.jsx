@@ -188,7 +188,14 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <TopBanner currentUser={currentUser} onLogout={handleLogout} onMenuClick={() => setMenuOpen(true)} />
+      <TopBanner
+        currentUser={currentUser}
+        tasks={tasks}
+        notes={notes}
+        users={users}
+        onLogout={handleLogout}
+        onMenuClick={() => setMenuOpen(true)}
+      />
       <NavDrawer
         open={menuOpen}
         onClose={() => setMenuOpen(false)}

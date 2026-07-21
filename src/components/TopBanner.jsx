@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { isAdminUser } from "../permissions";
+import NotificationBell from "./NotificationBell";
 import logoWordmark from "../assets/logo-full CA removed.png";
 
-export default function TopBanner({ currentUser, onLogout, onMenuClick }) {
+export default function TopBanner({ currentUser, tasks, notes, users, onLogout, onMenuClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const identityRef = useRef(null);
 
@@ -36,6 +37,8 @@ export default function TopBanner({ currentUser, onLogout, onMenuClick }) {
         <div className="brand-name">CSG's CRM</div>
         <div className="brand-sub">CSG & Associates — Chartered Accountants</div>
       </div>
+
+      <NotificationBell currentUser={currentUser} tasks={tasks} notes={notes} users={users} />
 
       <div className="identity-bar" ref={identityRef}>
         <button
