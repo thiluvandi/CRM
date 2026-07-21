@@ -6,16 +6,24 @@ export default function OverviewPanel({ users, tasks, currentUser, onSelectStatu
   const pendingCount = tasks.filter((t) => t.status === "Pending").length;
   const completedCount = tasks.filter((t) => t.status === "Completed").length;
 
-  const staff = users.filter((u) => !isAdminUser(u));
-  const loadByEmployee = staff.map((u) => ({
-    id: u.id,
-    name: u.name,
-    role: u.role,
-    count: tasks.filter((t) => t.assigned_to === u.id).length,
-  }));
-  const maxLoad = Math.max(1, ...loadByEmployee.map((l) => l.count));
-
   const today = new Date();
+
+  const staff = users.filter((u) => !isAdminUser(u));
+  const loadByEmployee = staff.map((u) => {
+    const userTasks = tasks.filter((t) => t.assigned_to === u.id);
+    const overdueCount = userTasks.filter((t) => t.status !== "Completed" && new Date(t.deadline) < today).length;
+    const completedCount = userTasks.filter((t) => t.status === "Completed").length;
+    const pendingCount = userTasks.length - overdueCount - completedCount;
+    return {
+      id: u.id,
+      name: u.name,
+      role: u.role,
+      total: userTasks.length,
+      overdueCount,
+      pendingCount,
+      completedCount,
+    };
+  });
 
   return (
     <div className="panel">
@@ -44,18 +52,40 @@ export default function OverviewPanel({ users, tasks, currentUser, onSelectStatu
       {admin && (
         <div className="section-block">
           <h3>Task Load per Employee</h3>
-          <div className="load-list">
+          <p className="section-hint">Hover a name for their task breakdown, click to see their tasks below.</p>
+          <div className="load-chip-row">
             {loadByEmployee.map((l) => (
-              <button type="button" className="load-row load-row--clickable" key={l.id} onClick={() => onSelectEmployee(l.id)}>
-                <div className="load-name">
+              <div className="load-chip-wrap" key={l.id}>
+                <button type="button" className="load-chip" onClick={() => onSelectEmployee(l.id)}>
                   {l.name}
-                  <span className="load-role">{l.role}</span>
+                  <span className="load-chip-count">{l.total}</span>
+                </button>
+                <div className="load-popover">
+                  <div className="load-popover-name">
+                    {l.name} <span className="load-role">{l.role}</span>
+                  </div>
+                  {l.total > 0 ? (
+                    <>
+                      <div className="load-popover-bar">
+                        {l.overdueCount > 0 && (
+                          <div className="load-segment load-segment--red" style={{ flexGrow: l.overdueCount }} />
+                        )}
+                        {l.pendingCount > 0 && (
+                          <div className="load-segment load-segment--yellow" style={{ flexGrow: l.pendingCount }} />
+                        )}
+                        {l.completedCount > 0 && (
+                          <div className="load-segment load-segment--green" style={{ flexGrow: l.completedCount }} />
+                        )}
+                      </div>
+                      <div className="load-popover-counts">
+                        {l.overdueCount} overdue · {l.pendingCount} pending · {l.completedCount} completed
+                      </div>
+                    </>
+                  ) : (
+                    <p className="load-popover-empty">No tasks assigned.</p>
+                  )}
                 </div>
-                <div className="load-bar-track">
-                  <div className="load-bar-fill" style={{ width: `${(l.count / maxLoad) * 100}%` }} />
-                </div>
-                <div className="load-count">{l.count}</div>
-              </button>
+              </div>
             ))}
           </div>
         </div>
