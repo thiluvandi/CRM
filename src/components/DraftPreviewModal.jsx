@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase, DRAFTS_BUCKET } from "../supabaseClient";
 
 export default function DraftPreviewModal({ draftFile, onClose }) {
@@ -26,8 +27,8 @@ export default function DraftPreviewModal({ draftFile, onClose }) {
   const isPdf = draftFile.type === "application/pdf";
   const isText = draftFile.type?.startsWith("text/");
 
-  return (
-    <div className="draft-modal-backdrop" onClick={onClose}>
+  return createPortal(
+    <div className="draft-modal-backdrop modal-backdrop-opening" onClick={onClose}>
       <div className="draft-modal" onClick={(e) => e.stopPropagation()}>
         <div className="draft-modal-header">
           <span className="draft-modal-title">{draftFile.name}</span>
@@ -60,6 +61,7 @@ export default function DraftPreviewModal({ draftFile, onClose }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

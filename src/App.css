@@ -878,8 +878,108 @@
 }
 
 /* Notes modal */
+.notes-dialog {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .notes-modal {
   max-width: 480px;
+}
+
+/* Task card shown above the notes thread inside the dialog */
+.notes-task-card {
+  margin-bottom: 0;
+  box-shadow: 0 20px 50px rgba(11, 25, 48, 0.35);
+}
+
+.notes-task-card-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Open/close animations: backdrop fades, thread rises, task card
+   flies in from below (as if lifted out of the list) and reverses out. */
+@keyframes notes-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes notes-backdrop-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes notes-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(90px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes notes-card-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(90px) scale(0.96);
+  }
+}
+
+@keyframes notes-thread-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes notes-thread-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+.modal-backdrop-opening {
+  animation: notes-backdrop-in 0.25s ease both;
+}
+
+.modal-backdrop-closing {
+  animation: notes-backdrop-out 0.25s ease both;
+}
+
+.notes-dialog-opening .notes-task-card {
+  animation: notes-card-in 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.notes-dialog-closing .notes-task-card {
+  animation: notes-card-out 0.25s ease-in both;
+}
+
+.notes-dialog-opening .notes-modal {
+  animation: notes-thread-in 0.3s cubic-bezier(0.2, 0.8, 0.3, 1) 0.06s both;
+}
+
+.notes-dialog-closing .notes-modal {
+  animation: notes-thread-out 0.25s ease-in both;
 }
 
 .notes-list {
