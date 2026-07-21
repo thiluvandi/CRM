@@ -1061,6 +1061,24 @@
   align-self: flex-end;
 }
 
+.notes-send-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.enter-key-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
 .draft-sub {
   font-size: 11px;
   color: var(--text-muted);

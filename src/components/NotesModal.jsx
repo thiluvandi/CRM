@@ -93,13 +93,25 @@ export default function NotesModal({ task, notes, users, currentUser, onAddNote,
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Write a note…"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  submit(e);
+                }
+              }}
+              placeholder="Write a note… (Shift+Enter for a new line)"
               rows={2}
               required
             />
             {error && <div className="form-error">{error}</div>}
-            <button type="submit" className="btn btn--primary btn--sm" disabled={submitting}>
+            <button
+              type="submit"
+              className="btn btn--primary btn--sm notes-send-btn"
+              disabled={submitting}
+              title="Enter to send · Shift+Enter for a new line"
+            >
               {submitting ? "Sending…" : "Send"}
+              {!submitting && <span className="enter-key-hint">↵</span>}
             </button>
           </form>
         </div>
