@@ -11,6 +11,13 @@ import "./App.css";
 
 const REMEMBER_KEY = "taxops_current_user_id";
 
+// password_hash is deliberately never bulk-fetched — see the note in schema.sql.
+const PROFILE_COLUMNS = "id,name,role,permissions,notifications_seen_at,created_at";
+// Fallback for databases where add_notifications_seen_migration.sql hasn't been
+// run yet; without it the whole profile load fails and the app would look empty.
+const PROFILE_COLUMNS_LEGACY = "id,name,role,permissions,created_at";
+const UNDEFINED_COLUMN = "42703";
+
 export default function App() {
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -19,13 +26,21 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  // { id, nonce } — the nonce lets the same task be re-focused on a repeat click.
+  const [focusTask, setFocusTask] = useState(null);
 
   const fetchUsers = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id,name,role,permissions,created_at")
-      .order("created_at");
-    if (!error) setUsers(data);
+    let { data, error } = await supabase.from("profiles").select(PROFILE_COLUMNS).order("created_at");
+    if (error?.code === UNDEFINED_COLUMN) {
+      ({ data, error } = await supabase.from("profiles").select(PROFILE_COLUMNS_LEGACY).order("created_at"));
+    }
+    if (error) {
+      setLoadError(error.message);
+      return;
+    }
+    setLoadError("");
+    setUsers(data);
   };
 
   const fetchTasks = async () => {
@@ -87,6 +102,19 @@ export default function App() {
     if (error) throw error;
     localStorage.setItem(REMEMBER_KEY, userId);
     setCurrentUserId(userId);
+  };
+
+  const handleMarkNotificationsSeen = async (iso) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ notifications_seen_at: iso })
+      .eq("id", currentUserId);
+    if (!error) await fetchUsers();
+  };
+
+  const handleSelectNotifiedTask = (taskId) => {
+    setActiveTab("dashboard");
+    setFocusTask({ id: taskId, nonce: Date.now() });
   };
 
   const handleLogout = () => {
@@ -171,6 +199,12 @@ export default function App() {
     return <div className="auth-loading-screen">Loading CSG's CRM…</div>;
   }
 
+  // A failed load also leaves users empty, and offering first-run setup then
+  // would invite a duplicate CA account on a database that already has one.
+  if (loadError) {
+    return <div className="auth-loading-screen">Couldn't load accounts — {loadError}</div>;
+  }
+
   if (users.length === 0) {
     return <FirstRunSetup onSetup={handleFirstRunSetup} />;
   }
@@ -193,6 +227,8 @@ export default function App() {
         tasks={tasks}
         notes={notes}
         users={users}
+        onMarkSeen={handleMarkNotificationsSeen}
+        onSelectTask={handleSelectNotifiedTask}
         onLogout={handleLogout}
         onMenuClick={() => setMenuOpen(true)}
       />
@@ -214,6 +250,7 @@ export default function App() {
             tasks={tasks}
             notes={notes}
             currentUser={currentUser}
+            focusTask={focusTask}
             onAddTask={handleAddTask}
             onUpdateTask={handleUpdateTask}
             onDeleteTask={handleDeleteTask}

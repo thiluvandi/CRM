@@ -17,6 +17,7 @@ create table if not exists profiles (
   role text not null check (role in ('CA', 'Admin', 'Employee')),
   permissions text[] not null default '{}',
   password_hash text,
+  notifications_seen_at timestamptz,
   created_at timestamptz not null default now()
 );
 

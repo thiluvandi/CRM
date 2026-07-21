@@ -3,7 +3,7 @@ import { isAdminUser } from "../permissions";
 import NotificationBell from "./NotificationBell";
 import logoWordmark from "../assets/logo-full CA removed.png";
 
-export default function TopBanner({ currentUser, tasks, notes, users, onLogout, onMenuClick }) {
+export default function TopBanner({ currentUser, tasks, notes, users, onMarkSeen, onSelectTask, onLogout, onMenuClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const identityRef = useRef(null);
 
@@ -38,7 +38,15 @@ export default function TopBanner({ currentUser, tasks, notes, users, onLogout, 
         <div className="brand-sub">CSG & Associates — Chartered Accountants</div>
       </div>
 
-      <NotificationBell currentUser={currentUser} tasks={tasks} notes={notes} users={users} />
+      <NotificationBell
+        key={currentUser.id}
+        currentUser={currentUser}
+        tasks={tasks}
+        notes={notes}
+        users={users}
+        onMarkSeen={onMarkSeen}
+        onSelectTask={onSelectTask}
+      />
 
       <div className="identity-bar" ref={identityRef}>
         <button

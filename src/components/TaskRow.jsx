@@ -1,18 +1,30 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase, DRAFTS_BUCKET } from "../supabaseClient";
 import DraftPreviewModal from "./DraftPreviewModal";
 import NotesModal from "./NotesModal";
 
 const STATUS_OPTIONS = ["Pending", "Completed"];
 
-export default function TaskRow({ task, users, notes = [], currentUser, canEditFields, canDelete, canVerify, onUpdate, onDelete, onAddNote }) {
+export default function TaskRow({ task, users, notes = [], currentUser, canEditFields, canDelete, canVerify, focusSignal, onUpdate, onDelete, onAddNote }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [flash, setFlash] = useState(false);
   const fileInputRef = useRef(null);
+  const cardRef = useRef(null);
+
+  // focusSignal carries a fresh nonce each time a notification for this task is
+  // clicked, so re-clicking the same one re-triggers the scroll and highlight.
+  useEffect(() => {
+    if (focusSignal === null || focusSignal === undefined) return;
+    cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlash(true);
+    const timer = setTimeout(() => setFlash(false), 2000);
+    return () => clearTimeout(timer);
+  }, [focusSignal]);
 
   const assigneeName = users.find((u) => u.id === task.assigned_to)?.name || "Unassigned";
   const uploadedByName = task.draft_uploaded_by ? users.find((u) => u.id === task.draft_uploaded_by)?.name : null;
@@ -117,7 +129,10 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
   }
 
   return (
-    <div className={`task-card ${task.status === "Pending" ? "task-card--pending" : "task-card--completed"}`}>
+    <div
+      ref={cardRef}
+      className={`task-card ${task.status === "Pending" ? "task-card--pending" : "task-card--completed"} ${flash ? "task-card--flash" : ""}`}
+    >
       <div className="task-card-main">
         <div className="task-card-header">
           <div className="task-client-group">

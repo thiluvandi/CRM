@@ -320,11 +320,21 @@
 .notif-item {
   display: flex;
   gap: 10px;
+  width: 100%;
   padding: 11px 14px;
+  border: none;
   border-bottom: 1px solid var(--border);
+  background: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.notif-item:last-child {
+.notif-item:hover {
+  background: var(--bg-muted);
+}
+
+.notif-list li:last-child .notif-item {
   border-bottom: none;
 }
 
@@ -945,6 +955,30 @@
   padding: 14px 16px;
   margin-bottom: 12px;
   background: var(--bg-surface);
+}
+
+/* Brief highlight when a notification jumps you to this task */
+.task-card--flash {
+  animation: task-flash 2s ease;
+}
+
+@keyframes task-flash {
+  0%,
+  55% {
+    background: var(--teal-100);
+    box-shadow: 0 0 0 3px var(--teal-400);
+  }
+  100% {
+    background: var(--bg-surface);
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-card--flash {
+    animation-duration: 0.01s;
+    background: var(--teal-100);
+  }
 }
 
 .task-card--pending {

@@ -1,15 +1,5 @@
 import { isAdminUser } from "../permissions";
 
-export const SEEN_KEY_PREFIX = "taxops_notifications_seen_";
-
-export function readSeenAt(userId) {
-  return localStorage.getItem(SEEN_KEY_PREFIX + userId) || null;
-}
-
-export function writeSeenAt(userId, iso) {
-  localStorage.setItem(SEEN_KEY_PREFIX + userId, iso);
-}
-
 /**
  * Derives the notification feed for a user from data the app already holds.
  *
@@ -39,6 +29,7 @@ export function buildNotifications({ currentUser, tasks, notes, users }) {
           title: "Draft awaiting verification",
           detail: `${label(task)} — uploaded by ${nameOf(task.draft_uploaded_by)}`,
           at: task.draft_uploaded_at,
+          taskId: task.id,
         });
       }
     }
@@ -51,6 +42,7 @@ export function buildNotifications({ currentUser, tasks, notes, users }) {
           title: "Draft verified",
           detail: `${label(task)} — verified by ${nameOf(task.draft_verified_by)}`,
           at: task.draft_verified_at,
+          taskId: task.id,
         });
       }
     }
@@ -77,6 +69,7 @@ export function buildNotifications({ currentUser, tasks, notes, users }) {
       title: `Note from ${author.name}`,
       detail: `${label(task)} — ${note.message}`,
       at: note.created_at,
+      taskId: task.id,
     });
   }
 

@@ -1,9 +1,9 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isAdminUser } from "../permissions";
 import OverviewPanel from "./OverviewPanel";
 import TasksHub from "./TasksHub";
 
-export default function Dashboard({ users, tasks, notes, currentUser, onAddTask, onUpdateTask, onDeleteTask, onAddNote }) {
+export default function Dashboard({ users, tasks, notes, currentUser, focusTask, onAddTask, onUpdateTask, onDeleteTask, onAddNote }) {
   const [filter, setFilter] = useState({ status: null, assignedTo: null });
   const tasksRef = useRef(null);
 
@@ -31,6 +31,11 @@ export default function Dashboard({ users, tasks, notes, currentUser, onAddTask,
 
   const clearFilter = () => setFilter({ status: null, assignedTo: null });
 
+  // An active filter could be hiding the task a notification points at.
+  useEffect(() => {
+    if (focusTask) setFilter({ status: null, assignedTo: null });
+  }, [focusTask]);
+
   return (
     <div className="dashboard-stack">
       <OverviewPanel
@@ -48,6 +53,7 @@ export default function Dashboard({ users, tasks, notes, currentUser, onAddTask,
           tasks={tasks}
           notes={notes}
           currentUser={currentUser}
+          focusTask={focusTask}
           filter={filter}
           onClearFilter={clearFilter}
           onAddTask={onAddTask}

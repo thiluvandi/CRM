@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { buildNotifications, countUnread, readSeenAt, writeSeenAt } from "../lib/notifications";
+import { buildNotifications, countUnread } from "../lib/notifications";
 
 const KIND_ICON = {
   verify: "📄",
@@ -16,9 +16,11 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
-export default function NotificationBell({ currentUser, tasks, notes, users }) {
+export default function NotificationBell({ currentUser, tasks, notes, users, onMarkSeen, onSelectTask }) {
   const [open, setOpen] = useState(false);
-  const [seenAt, setSeenAt] = useState(() => readSeenAt(currentUser.id));
+  // Mirrors the stored mark so the badge clears instantly, without waiting for
+  // the write to land and the profile to be refetched.
+  const [seenAt, setSeenAt] = useState(currentUser.notifications_seen_at);
   const panelRef = useRef(null);
 
   const items = useMemo(
@@ -27,10 +29,13 @@ export default function NotificationBell({ currentUser, tasks, notes, users }) {
   );
   const unread = countUnread(items, seenAt);
 
-  // Switching users mid-session must not carry the previous mark over.
+  // Never move the mark backwards: a refetch can briefly carry the pre-write
+  // value and would otherwise make a cleared badge reappear.
   useEffect(() => {
-    setSeenAt(readSeenAt(currentUser.id));
-  }, [currentUser.id]);
+    const stored = currentUser.notifications_seen_at;
+    if (!stored) return;
+    setSeenAt((local) => (!local || new Date(stored) > new Date(local) ? stored : local));
+  }, [currentUser.notifications_seen_at]);
 
   useEffect(() => {
     if (!open) return;
@@ -52,11 +57,16 @@ export default function NotificationBell({ currentUser, tasks, notes, users }) {
     setOpen((wasOpen) => {
       if (!wasOpen) {
         const now = new Date().toISOString();
-        writeSeenAt(currentUser.id, now);
         setSeenAt(now);
+        onMarkSeen(now);
       }
       return !wasOpen;
     });
+  };
+
+  const select = (taskId) => {
+    setOpen(false);
+    onSelectTask(taskId);
   };
 
   return (
@@ -82,15 +92,17 @@ export default function NotificationBell({ currentUser, tasks, notes, users }) {
           ) : (
             <ul className="notif-list">
               {items.slice(0, 30).map((item) => (
-                <li key={item.id} className="notif-item">
-                  <span className="notif-item-icon" aria-hidden="true">
-                    {KIND_ICON[item.kind]}
-                  </span>
-                  <span className="notif-item-body">
-                    <span className="notif-item-title">{item.title}</span>
-                    <span className="notif-item-detail">{item.detail}</span>
-                    <span className="notif-item-time">{timeAgo(item.at)}</span>
-                  </span>
+                <li key={item.id}>
+                  <button type="button" className="notif-item" onClick={() => select(item.taskId)}>
+                    <span className="notif-item-icon" aria-hidden="true">
+                      {KIND_ICON[item.kind]}
+                    </span>
+                    <span className="notif-item-body">
+                      <span className="notif-item-title">{item.title}</span>
+                      <span className="notif-item-detail">{item.detail}</span>
+                      <span className="notif-item-time">{timeAgo(item.at)}</span>
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>
