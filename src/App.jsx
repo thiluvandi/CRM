@@ -14,6 +14,7 @@ const REMEMBER_KEY = "taxops_current_user_id";
 export default function App() {
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [notes, setNotes] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem(REMEMBER_KEY));
   const [activeTab, setActiveTab] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -32,13 +33,19 @@ export default function App() {
     if (!error) setTasks(data);
   };
 
+  const fetchNotes = async () => {
+    const { data, error } = await supabase.from("task_notes").select("*").order("created_at");
+    if (!error) setNotes(data);
+  };
+
   useEffect(() => {
-    Promise.all([fetchUsers(), fetchTasks()]).then(() => setLoading(false));
+    Promise.all([fetchUsers(), fetchTasks(), fetchNotes()]).then(() => setLoading(false));
 
     const channel = supabase
       .channel("taxops-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchUsers)
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, fetchTasks)
+      .on("postgres_changes", { event: "*", schema: "public", table: "task_notes" }, fetchNotes)
       .subscribe();
 
     return () => {
@@ -118,6 +125,14 @@ export default function App() {
     await fetchTasks();
   };
 
+  const handleAddNote = async (taskId, message) => {
+    const { error } = await supabase
+      .from("task_notes")
+      .insert({ task_id: taskId, author_id: currentUser.id, message });
+    if (error) throw error;
+    await fetchNotes();
+  };
+
   const handleTogglePermission = async (userId, key, checked) => {
     const target = users.find((u) => u.id === userId);
     if (!target) return;
@@ -190,10 +205,12 @@ export default function App() {
           <Dashboard
             users={users}
             tasks={tasks}
+            notes={notes}
             currentUser={currentUser}
             onAddTask={handleAddTask}
             onUpdateTask={handleUpdateTask}
             onDeleteTask={handleDeleteTask}
+            onAddNote={handleAddNote}
           />
         )}
         {activeTab === "users" && (

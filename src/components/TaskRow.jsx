@@ -1,13 +1,15 @@
 import { useRef, useState } from "react";
 import { supabase, DRAFTS_BUCKET } from "../supabaseClient";
 import DraftPreviewModal from "./DraftPreviewModal";
+import NotesModal from "./NotesModal";
 
 const STATUS_OPTIONS = ["Pending", "Completed"];
 
-export default function TaskRow({ task, users, currentUser, canEditFields, canDelete, canVerify, onUpdate, onDelete }) {
+export default function TaskRow({ task, users, notes = [], currentUser, canEditFields, canDelete, canVerify, onUpdate, onDelete, onAddNote }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileInputRef = useRef(null);
@@ -186,6 +188,9 @@ export default function TaskRow({ task, users, currentUser, canEditFields, canDe
             </option>
           ))}
         </select>
+        <button className="btn btn--ghost btn--sm" onClick={() => setNotesOpen(true)} title="Notes">
+          💬 Notes{notes.length > 0 ? ` (${notes.length})` : ""}
+        </button>
         {canEditFields && (
           <button className="btn btn--ghost btn--sm" onClick={startEdit} title="Edit task details">
             Edit
@@ -206,6 +211,17 @@ export default function TaskRow({ task, users, currentUser, canEditFields, canDe
             type: task.draft_file_type,
           }}
           onClose={() => setPreviewOpen(false)}
+        />
+      )}
+
+      {notesOpen && (
+        <NotesModal
+          task={task}
+          notes={notes}
+          users={users}
+          currentUser={currentUser}
+          onAddNote={onAddNote}
+          onClose={() => setNotesOpen(false)}
         />
       )}
     </div>

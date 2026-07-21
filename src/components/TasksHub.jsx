@@ -3,7 +3,7 @@ import { canViewAllTasks, canAddEditTasks, canDeleteData, isAdminUser } from "..
 import TaskRow from "./TaskRow";
 import AddTaskForm from "./AddTaskForm";
 
-export default function TasksHub({ users, tasks, currentUser, filter, onClearFilter, onAddTask, onUpdateTask, onDeleteTask }) {
+export default function TasksHub({ users, tasks, notes, currentUser, filter, onClearFilter, onAddTask, onUpdateTask, onDeleteTask, onAddNote }) {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const seesAll = canViewAllTasks(currentUser);
@@ -76,12 +76,14 @@ export default function TasksHub({ users, tasks, currentUser, filter, onClearFil
                 key={t.id}
                 task={t}
                 users={users}
+                notes={notes.filter((n) => n.task_id === t.id)}
                 currentUser={currentUser}
                 canEditFields={editable}
                 canDelete={deletable}
                 canVerify={isAdminUser(currentUser)}
                 onUpdate={onUpdateTask}
                 onDelete={onDeleteTask}
+                onAddNote={onAddNote}
               />
             ))}
           </div>
@@ -96,12 +98,14 @@ export default function TasksHub({ users, tasks, currentUser, filter, onClearFil
                 key={t.id}
                 task={t}
                 users={users}
+                notes={notes.filter((n) => n.task_id === t.id)}
                 currentUser={currentUser}
                 canEditFields={editable}
                 canDelete={deletable}
                 canVerify={isAdminUser(currentUser)}
                 onUpdate={onUpdateTask}
                 onDelete={onDeleteTask}
+                onAddNote={onAddNote}
               />
             ))}
           </div>

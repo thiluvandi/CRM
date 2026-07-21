@@ -47,6 +47,20 @@ create table if not exists tasks (
 alter table tasks enable row level security;
 
 -- ============================================================
+-- 2b. Task Notes (communication thread between CA/Admin and the
+--     assignee, scoped to one task)
+-- ============================================================
+create table if not exists task_notes (
+  id bigint generated always as identity primary key,
+  task_id bigint not null references tasks(id) on delete cascade,
+  author_id uuid not null references profiles(id),
+  message text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table task_notes enable row level security;
+
+-- ============================================================
 -- 3. RLS policies — open to the anon key; the app enforces who can
 --    see/edit what based on the logged-in user's permissions.
 --    NOTE: because select is open, password_hash IS technically readable
@@ -78,6 +92,12 @@ create policy "tasks_update_anon" on tasks for update using (true);
 
 drop policy if exists "tasks_delete_anon" on tasks;
 create policy "tasks_delete_anon" on tasks for delete using (true);
+
+drop policy if exists "task_notes_select_anon" on task_notes;
+create policy "task_notes_select_anon" on task_notes for select using (true);
+
+drop policy if exists "task_notes_insert_anon" on task_notes;
+create policy "task_notes_insert_anon" on task_notes for insert with check (true);
 
 -- ============================================================
 -- 4. Storage bucket for uploaded drafts (private — accessed via signed URLs)

@@ -3,7 +3,7 @@ import { isAdminUser } from "../permissions";
 import OverviewPanel from "./OverviewPanel";
 import TasksHub from "./TasksHub";
 
-export default function Dashboard({ users, tasks, currentUser, onAddTask, onUpdateTask, onDeleteTask }) {
+export default function Dashboard({ users, tasks, notes, currentUser, onAddTask, onUpdateTask, onDeleteTask, onAddNote }) {
   const [filter, setFilter] = useState({ status: null, assignedTo: null });
   const tasksRef = useRef(null);
 
@@ -46,12 +46,14 @@ export default function Dashboard({ users, tasks, currentUser, onAddTask, onUpda
         <TasksHub
           users={users}
           tasks={tasks}
+          notes={notes}
           currentUser={currentUser}
           filter={filter}
           onClearFilter={clearFilter}
           onAddTask={onAddTask}
           onUpdateTask={onUpdateTask}
           onDeleteTask={onDeleteTask}
+          onAddNote={onAddNote}
         />
       </div>
     </div>
