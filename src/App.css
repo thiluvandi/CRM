@@ -698,6 +698,13 @@
   font-size: 14px;
 }
 
+.task-client-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .task-card-meta {
   margin-top: 6px;
   font-size: 12.5px;

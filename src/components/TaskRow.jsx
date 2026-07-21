@@ -120,7 +120,12 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
     <div className={`task-card ${task.status === "Pending" ? "task-card--pending" : "task-card--completed"}`}>
       <div className="task-card-main">
         <div className="task-card-header">
-          <span className="task-client">{task.client}</span>
+          <div className="task-client-group">
+            <span className="task-client">{task.client}</span>
+            <button className="btn btn--ghost btn--sm" onClick={() => setNotesOpen(true)} title="Notes">
+              💬 Notes{notes.length > 0 ? ` (${notes.length})` : ""}
+            </button>
+          </div>
           <span className={`status-pill status-pill--${task.status.toLowerCase()}`}>{task.status}</span>
         </div>
         <div className="task-card-meta">
@@ -188,16 +193,21 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
             </option>
           ))}
         </select>
-        <button className="btn btn--ghost btn--sm" onClick={() => setNotesOpen(true)} title="Notes">
-          💬 Notes{notes.length > 0 ? ` (${notes.length})` : ""}
-        </button>
         {canEditFields && (
           <button className="btn btn--ghost btn--sm" onClick={startEdit} title="Edit task details">
-            Edit
+            Edit Task
           </button>
         )}
         {canDelete && (
-          <button className="btn btn--danger btn--sm" onClick={() => onDelete(task.id)} title="Delete task">
+          <button
+            className="btn btn--danger btn--sm"
+            onClick={() => {
+              if (window.confirm(`Delete "${task.client}" (${task.task_type})? This cannot be undone.`)) {
+                onDelete(task.id);
+              }
+            }}
+            title="Delete task"
+          >
             Delete
           </button>
         )}
