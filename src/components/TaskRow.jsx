@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase, DRAFTS_BUCKET } from "../supabaseClient";
 import DraftPreviewModal from "./DraftPreviewModal";
 import NotesModal from "./NotesModal";
-
-const STATUS_OPTIONS = ["Pending", "Completed"];
+import StatusToggle from "./StatusToggle";
 
 export default function TaskRow({ task, users, notes = [], currentUser, canEditFields, canDelete, canVerify, focusSignal, onUpdate, onDelete, onAddNote }) {
   const [editing, setEditing] = useState(false);
@@ -241,16 +240,10 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
       </div>
 
       <div className="task-card-actions">
-        <select
+        <StatusToggle
           value={task.status}
-          onChange={(e) => onUpdate(task.id, { status: e.target.value })}
-        >
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+          onChange={(status) => onUpdate(task.id, { status })}
+        />
         {canEditFields && (
           <button className="btn btn--ghost btn--sm" onClick={startEdit} title="Edit task details">
             Edit Task
