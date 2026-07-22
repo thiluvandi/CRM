@@ -68,6 +68,32 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
     });
   };
 
+  const handleRemoveDraft = async () => {
+    if (!window.confirm(`Remove "${task.draft_file_name}"? This also clears its verification.`)) return;
+    setUploadError("");
+    setUploading(true);
+    // Clear the row even if the storage object is already gone, so a stale
+    // reference can't leave the task stuck with an unremovable file.
+    const { error: removeErr } = await supabase.storage.from(DRAFTS_BUCKET).remove([task.draft_file_path]);
+    if (removeErr) {
+      setUploadError(removeErr.message);
+      setUploading(false);
+      return;
+    }
+    await onUpdate(task.id, {
+      draft_file_name: null,
+      draft_file_path: null,
+      draft_file_type: null,
+      draft_file_size: null,
+      draft_uploaded_by: null,
+      draft_uploaded_at: null,
+      draft_verified: false,
+      draft_verified_by: null,
+      draft_verified_at: null,
+    });
+    setUploading(false);
+  };
+
   const startEdit = () => {
     setDraft(task);
     setEditing(true);
@@ -184,9 +210,26 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
                 Unverify
               </button>
             )}
-            <button className="btn btn--ghost btn--sm" onClick={triggerFileSelect} disabled={uploading}>
-              {uploading ? "Uploading…" : "Replace"}
+            <button
+              className="btn btn--ghost btn--sm btn--icon"
+              onClick={triggerFileSelect}
+              disabled={uploading}
+              title="Replace file"
+              aria-label="Replace file"
+            >
+              {uploading ? "…" : "↻"}
             </button>
+            {(canVerify || task.draft_uploaded_by === currentUser.id) && (
+              <button
+                className="btn btn--danger btn--sm btn--icon"
+                onClick={handleRemoveDraft}
+                disabled={uploading}
+                title="Remove file"
+                aria-label="Remove file"
+              >
+                ✕
+              </button>
+            )}
           </div>
         ) : (
           <button className="btn btn--ghost btn--sm" onClick={triggerFileSelect} disabled={uploading}>
