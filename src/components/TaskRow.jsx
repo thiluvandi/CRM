@@ -42,6 +42,7 @@ export default function TaskRow({ task, users, notes = [], activity = [], curren
     if (!file) return;
     setUploadError("");
     setUploading(true);
+    const oldPath = task.draft_file_path;
     const path = `${task.id}/${Date.now()}-${file.name}`;
     const { error: uploadErr } = await supabase.storage.from(DRAFTS_BUCKET).upload(path, file, { upsert: true });
     if (uploadErr) {
@@ -49,7 +50,7 @@ export default function TaskRow({ task, users, notes = [], activity = [], curren
       setUploading(false);
       return;
     }
-    const replacing = !!task.draft_file_path;
+    const replacing = !!oldPath;
     await onUpdate(
       task.id,
       {
@@ -65,6 +66,14 @@ export default function TaskRow({ task, users, notes = [], activity = [], curren
       },
       { action: replacing ? "draft_replaced" : "draft_uploaded", detail: `${replacing ? "Replaced draft with" : "Uploaded draft"} "${file.name}"` },
     );
+    // Delete the superseded object only after the row points at the new one, so
+    // a failed replace never leaves the task referencing a deleted file. The old
+    // path is timestamped, so it's distinct from the new upload. Best-effort:
+    // the replace has already succeeded, a leftover object is not worth erroring.
+    if (oldPath && oldPath !== path) {
+      const { error: cleanupErr } = await supabase.storage.from(DRAFTS_BUCKET).remove([oldPath]);
+      if (cleanupErr) console.warn("Could not delete replaced draft:", oldPath, cleanupErr.message);
+    }
     setUploading(false);
   };
 
