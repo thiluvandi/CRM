@@ -8,6 +8,12 @@ export default function OverviewPanel({ users, tasks, currentUser, onSelectStatu
 
   const today = new Date();
 
+  // The tracking grid is a daily board: every pending task, plus tasks that
+  // were completed *today*. Older completions live in the Completed Tasks tab.
+  const completedToday = (t) =>
+    t.status === "Completed" && t.completed_at && new Date(t.completed_at).toDateString() === today.toDateString();
+  const gridTasks = tasks.filter((t) => t.status !== "Completed" || completedToday(t));
+
   const staff = users.filter((u) => !isAdminUser(u));
   const loadByEmployee = staff.map((u) => {
     const userTasks = tasks.filter((t) => t.assigned_to === u.id);
@@ -93,6 +99,7 @@ export default function OverviewPanel({ users, tasks, currentUser, onSelectStatu
 
       <div className="section-block">
         <h3>{admin ? "Tracking Grid" : "Your Tasks"}</h3>
+        <p className="section-hint">Pending tasks plus tasks completed today — see the Completed Tasks tab for the full history.</p>
         <div className="table-wrap">
           <table className="grid-table">
             <thead>
@@ -105,7 +112,12 @@ export default function OverviewPanel({ users, tasks, currentUser, onSelectStatu
               </tr>
             </thead>
             <tbody>
-              {tasks.map((t) => {
+              {gridTasks.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="empty-note">No pending tasks or completions today.</td>
+                </tr>
+              )}
+              {gridTasks.map((t) => {
                 const overdue = t.status !== "Completed" && new Date(t.deadline) < today;
                 const assigneeName = users.find((u) => u.id === t.assigned_to)?.name || "Unassigned";
                 return (
