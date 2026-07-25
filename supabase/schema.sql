@@ -42,6 +42,7 @@ create table if not exists tasks (
   draft_verified boolean not null default false,
   draft_verified_by uuid references profiles(id),
   draft_verified_at timestamptz,
+  created_by uuid references profiles(id),
   created_at timestamptz not null default now()
 );
 
@@ -60,6 +61,22 @@ create table if not exists task_notes (
 );
 
 alter table task_notes enable row level security;
+
+-- ============================================================
+-- 2c. Task Activity (audit log of meaningful actions on a task —
+--     created, edited, status change, draft upload/remove, verify,
+--     note added — with who did it and when)
+-- ============================================================
+create table if not exists task_activity (
+  id bigint generated always as identity primary key,
+  task_id bigint not null references tasks(id) on delete cascade,
+  actor_id uuid references profiles(id),
+  action text not null,
+  detail text,
+  created_at timestamptz not null default now()
+);
+
+alter table task_activity enable row level security;
 
 -- ============================================================
 -- 3. RLS policies — open to the anon key; the app enforces who can
@@ -99,6 +116,12 @@ create policy "task_notes_select_anon" on task_notes for select using (true);
 
 drop policy if exists "task_notes_insert_anon" on task_notes;
 create policy "task_notes_insert_anon" on task_notes for insert with check (true);
+
+drop policy if exists "task_activity_select_anon" on task_activity;
+create policy "task_activity_select_anon" on task_activity for select using (true);
+
+drop policy if exists "task_activity_insert_anon" on task_activity;
+create policy "task_activity_insert_anon" on task_activity for insert with check (true);
 
 -- ============================================================
 -- 4. Storage bucket for uploaded drafts (private — accessed via signed URLs)

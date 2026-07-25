@@ -3,7 +3,7 @@ import { canViewAllTasks, canAddEditTasks, canDeleteData, isAdminUser } from "..
 import TaskRow from "./TaskRow";
 import AddTaskForm from "./AddTaskForm";
 
-export default function TasksHub({ users, tasks, notes, currentUser, focusTask, filter, onClearFilter, onAddTask, onUpdateTask, onDeleteTask, onAddNote }) {
+export default function TasksHub({ users, tasks, notes, activity, currentUser, focusTask, filter, onClearFilter, onAddTask, onUpdateTask, onDeleteTask, onAddNote }) {
   const [showAddForm, setShowAddForm] = useState(false);
 
   const seesAll = canViewAllTasks(currentUser);
@@ -54,10 +54,11 @@ export default function TasksHub({ users, tasks, notes, currentUser, focusTask, 
       {!isAdminUser(currentUser) && (
         <div className="scope-note">
           You can add new tasks for anyone.{" "}
+          You can always edit tasks you created yourself.{" "}
           {editable || deletable ? (
-            <>Your permissions also allow: {[editable && "Edit Task Details", deletable && "Delete Data"].filter(Boolean).join(", ")}.</>
+            <>Your permissions also allow: {[editable && "Edit any task's details", deletable && "Delete Data"].filter(Boolean).join(", ")}.</>
           ) : (
-            <>Existing tasks can only have their Status changed — ask an Admin to unlock more.</>
+            <>For tasks assigned to you by others, you can only change the Status — ask an Admin to unlock more.</>
           )}
         </div>
       )}
@@ -77,6 +78,7 @@ export default function TasksHub({ users, tasks, notes, currentUser, focusTask, 
                 task={t}
                 users={users}
                 notes={notes.filter((n) => n.task_id === t.id)}
+                activity={activity.filter((a) => a.task_id === t.id)}
                 currentUser={currentUser}
                 canEditFields={editable}
                 canDelete={deletable}
@@ -100,6 +102,7 @@ export default function TasksHub({ users, tasks, notes, currentUser, focusTask, 
                 task={t}
                 users={users}
                 notes={notes.filter((n) => n.task_id === t.id)}
+                activity={activity.filter((a) => a.task_id === t.id)}
                 currentUser={currentUser}
                 canEditFields={editable}
                 canDelete={deletable}

@@ -22,6 +22,7 @@ export default function App() {
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [notes, setNotes] = useState([]);
+  const [activity, setActivity] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem(REMEMBER_KEY));
   const [activeTab, setActiveTab] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -53,14 +54,22 @@ export default function App() {
     if (!error) setNotes(data);
   };
 
+  // The activity table ships in a later migration; tolerate its absence so an
+  // un-migrated database still loads the rest of the app.
+  const fetchActivity = async () => {
+    const { data, error } = await supabase.from("task_activity").select("*").order("created_at");
+    if (!error) setActivity(data);
+  };
+
   useEffect(() => {
-    Promise.all([fetchUsers(), fetchTasks(), fetchNotes()]).then(() => setLoading(false));
+    Promise.all([fetchUsers(), fetchTasks(), fetchNotes(), fetchActivity()]).then(() => setLoading(false));
 
     const channel = supabase
       .channel("taxops-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchUsers)
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, fetchTasks)
       .on("postgres_changes", { event: "*", schema: "public", table: "task_notes" }, fetchNotes)
+      .on("postgres_changes", { event: "*", schema: "public", table: "task_activity" }, fetchActivity)
       .subscribe();
 
     return () => {
@@ -135,15 +144,37 @@ export default function App() {
     setCurrentUserId(data.id);
   };
 
+  // Records one meaningful action against a task. Best-effort: a failed log
+  // (e.g. the migration hasn't been run yet) must never block the action it
+  // describes, which has already succeeded by the time we get here.
+  const logActivity = async (taskId, action, detail) => {
+    const { error } = await supabase
+      .from("task_activity")
+      .insert({ task_id: taskId, actor_id: currentUserId, action, detail });
+    if (!error) await fetchActivity();
+  };
+
   const handleAddTask = async (taskDraft) => {
-    const { error } = await supabase.from("tasks").insert(taskDraft);
+    let { data, error } = await supabase
+      .from("tasks")
+      .insert({ ...taskDraft, created_by: currentUserId })
+      .select()
+      .single();
+    // Fall back for databases where add_task_activity_migration.sql hasn't been
+    // run yet — created_by won't exist there, but adding tasks must still work.
+    if (error?.code === UNDEFINED_COLUMN) {
+      ({ data, error } = await supabase.from("tasks").insert(taskDraft).select().single());
+    }
     if (error) throw error;
+    const assignee = users.find((u) => u.id === data.assigned_to)?.name || "Unassigned";
+    await logActivity(data.id, "created", `Created task — assigned to ${assignee}`);
     await fetchTasks();
   };
 
-  const handleUpdateTask = async (taskId, updates) => {
+  const handleUpdateTask = async (taskId, updates, activity) => {
     const { error } = await supabase.from("tasks").update(updates).eq("id", taskId);
     if (error) throw error;
+    if (activity) await logActivity(taskId, activity.action, activity.detail);
     await fetchTasks();
   };
 
@@ -158,6 +189,7 @@ export default function App() {
       .from("task_notes")
       .insert({ task_id: taskId, author_id: currentUser.id, message });
     if (error) throw error;
+    await logActivity(taskId, "note_added", "Added a note");
     await fetchNotes();
   };
 
@@ -249,6 +281,7 @@ export default function App() {
             users={users}
             tasks={tasks}
             notes={notes}
+            activity={activity}
             currentUser={currentUser}
             focusTask={focusTask}
             onAddTask={handleAddTask}

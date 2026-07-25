@@ -4,16 +4,21 @@ import DraftPreviewModal from "./DraftPreviewModal";
 import NotesModal from "./NotesModal";
 import StatusToggle from "./StatusToggle";
 
-export default function TaskRow({ task, users, notes = [], currentUser, canEditFields, canDelete, canVerify, focusSignal, onUpdate, onDelete, onAddNote }) {
+export default function TaskRow({ task, users, notes = [], activity = [], currentUser, canEditFields, canDelete, canVerify, focusSignal, onUpdate, onDelete, onAddNote }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [logOpen, setLogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [flash, setFlash] = useState(false);
   const fileInputRef = useRef(null);
   const cardRef = useRef(null);
+
+  // A task's creator can always edit it, even without the firm-wide Add/Edit
+  // permission; everyone else needs that permission.
+  const canEdit = canEditFields || task.created_by === currentUser.id;
 
   // focusSignal carries a fresh nonce each time a notification for this task is
   // clicked, so re-clicking the same one re-triggers the scroll and highlight.
@@ -44,27 +49,36 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
       setUploading(false);
       return;
     }
-    await onUpdate(task.id, {
-      draft_file_name: file.name,
-      draft_file_path: path,
-      draft_file_type: file.type,
-      draft_file_size: file.size,
-      draft_uploaded_by: currentUser.id,
-      draft_uploaded_at: new Date().toISOString(),
-      draft_verified: false,
-      draft_verified_by: null,
-      draft_verified_at: null,
-    });
+    const replacing = !!task.draft_file_path;
+    await onUpdate(
+      task.id,
+      {
+        draft_file_name: file.name,
+        draft_file_path: path,
+        draft_file_type: file.type,
+        draft_file_size: file.size,
+        draft_uploaded_by: currentUser.id,
+        draft_uploaded_at: new Date().toISOString(),
+        draft_verified: false,
+        draft_verified_by: null,
+        draft_verified_at: null,
+      },
+      { action: replacing ? "draft_replaced" : "draft_uploaded", detail: `${replacing ? "Replaced draft with" : "Uploaded draft"} "${file.name}"` },
+    );
     setUploading(false);
   };
 
   const toggleVerified = () => {
     const verified = !task.draft_verified;
-    onUpdate(task.id, {
-      draft_verified: verified,
-      draft_verified_by: verified ? currentUser.id : null,
-      draft_verified_at: verified ? new Date().toISOString() : null,
-    });
+    onUpdate(
+      task.id,
+      {
+        draft_verified: verified,
+        draft_verified_by: verified ? currentUser.id : null,
+        draft_verified_at: verified ? new Date().toISOString() : null,
+      },
+      { action: verified ? "draft_verified" : "draft_unverified", detail: verified ? "Marked draft verified" : "Removed draft verification" },
+    );
   };
 
   const handleRemoveDraft = async () => {
@@ -79,17 +93,22 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
       setUploading(false);
       return;
     }
-    await onUpdate(task.id, {
-      draft_file_name: null,
-      draft_file_path: null,
-      draft_file_type: null,
-      draft_file_size: null,
-      draft_uploaded_by: null,
-      draft_uploaded_at: null,
-      draft_verified: false,
-      draft_verified_by: null,
-      draft_verified_at: null,
-    });
+    const removedName = task.draft_file_name;
+    await onUpdate(
+      task.id,
+      {
+        draft_file_name: null,
+        draft_file_path: null,
+        draft_file_type: null,
+        draft_file_size: null,
+        draft_uploaded_by: null,
+        draft_uploaded_at: null,
+        draft_verified: false,
+        draft_verified_by: null,
+        draft_verified_at: null,
+      },
+      { action: "draft_removed", detail: `Removed draft "${removedName}"` },
+    );
     setUploading(false);
   };
 
@@ -99,12 +118,22 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
   };
 
   const save = () => {
-    onUpdate(task.id, {
-      client: draft.client,
-      task_type: draft.task_type,
-      assigned_to: draft.assigned_to,
-      deadline: draft.deadline,
-    });
+    const nameOf = (id) => users.find((u) => u.id === id)?.name || "Unassigned";
+    const changes = [];
+    if (draft.client !== task.client) changes.push(`Client "${task.client}" → "${draft.client}"`);
+    if (draft.task_type !== task.task_type) changes.push(`Task Type "${task.task_type}" → "${draft.task_type}"`);
+    if (draft.assigned_to !== task.assigned_to) changes.push(`Assignee ${nameOf(task.assigned_to)} → ${nameOf(draft.assigned_to)}`);
+    if (draft.deadline !== task.deadline) changes.push(`Deadline ${task.deadline} → ${draft.deadline}`);
+    onUpdate(
+      task.id,
+      {
+        client: draft.client,
+        task_type: draft.task_type,
+        assigned_to: draft.assigned_to,
+        deadline: draft.deadline,
+      },
+      changes.length ? { action: "edited", detail: `Edited ${changes.join("; ")}` } : null,
+    );
     setEditing(false);
   };
 
@@ -242,11 +271,18 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
       <div className="task-card-actions">
         <StatusToggle
           value={task.status}
-          onChange={(status) => onUpdate(task.id, { status })}
+          onChange={(status) =>
+            onUpdate(task.id, { status }, { action: "status_changed", detail: `Marked ${status}` })
+          }
         />
-        {canEditFields && (
-          <button className="btn btn--ghost btn--sm" onClick={startEdit} title="Edit task details">
-            Edit Task
+        {canEdit && (
+          <button
+            className="btn btn--ghost btn--sm btn--icon"
+            onClick={startEdit}
+            title="Edit task details"
+            aria-label="Edit task details"
+          >
+            ✏️
           </button>
         )}
         {canDelete && (
@@ -261,6 +297,33 @@ export default function TaskRow({ task, users, notes = [], currentUser, canEditF
           >
             Delete
           </button>
+        )}
+      </div>
+
+      <div className="task-activity">
+        <button
+          type="button"
+          className="activity-toggle"
+          onClick={() => setLogOpen((o) => !o)}
+          aria-expanded={logOpen}
+        >
+          <span className={`activity-caret ${logOpen ? "activity-caret--open" : ""}`} aria-hidden="true">▸</span>
+          Activity log{activity.length > 0 ? ` (${activity.length})` : ""}
+        </button>
+        {logOpen && (
+          <ul className="activity-list">
+            {activity.length === 0 && <li className="activity-empty">No activity recorded yet.</li>}
+            {[...activity]
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .map((entry) => (
+                <li key={entry.id} className="activity-item">
+                  <span className="activity-detail">{entry.detail || entry.action}</span>
+                  <span className="activity-by">
+                    {users.find((u) => u.id === entry.actor_id)?.name || "—"} · {new Date(entry.created_at).toLocaleString()}
+                  </span>
+                </li>
+              ))}
+          </ul>
         )}
       </div>
 
