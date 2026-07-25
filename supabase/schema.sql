@@ -148,7 +148,25 @@ create policy "task_drafts_delete_anon" on storage.objects
   for delete using (bucket_id = 'task-drafts');
 
 -- ============================================================
--- 5. Seed data — not needed. The app shows a first-run setup screen to
+-- 5. Realtime — the app subscribes to these tables for live updates
+--    (and live notifications). Ensure each is in the supabase_realtime
+--    publication. Idempotent: only adds a table that isn't already a member.
+-- ============================================================
+do $$
+declare t text;
+begin
+  foreach t in array array['profiles', 'tasks', 'task_notes', 'task_activity'] loop
+    if not exists (
+      select 1 from pg_publication_tables
+      where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t
+    ) then
+      execute format('alter publication supabase_realtime add table public.%I', t);
+    end if;
+  end loop;
+end $$;
+
+-- ============================================================
+-- 6. Seed data — not needed. The app shows a first-run setup screen to
 --    create the first CA account (with a password) when profiles is empty,
 --    and "Add New Employee" handles everyone after that.
 -- ============================================================

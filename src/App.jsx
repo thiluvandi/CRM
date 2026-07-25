@@ -65,16 +65,26 @@ export default function App() {
   useEffect(() => {
     Promise.all([fetchUsers(), fetchTasks(), fetchNotes(), fetchActivity()]).then(() => setLoading(false));
 
+    // profiles/tasks/task_notes drive the live UI and notifications — keep them
+    // on their own channel so nothing else can disturb their realtime feed.
     const channel = supabase
       .channel("taxops-changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, fetchUsers)
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, fetchTasks)
       .on("postgres_changes", { event: "*", schema: "public", table: "task_notes" }, fetchNotes)
+      .subscribe();
+
+    // task_activity is isolated on its own channel: if it isn't enabled for
+    // realtime, a CHANNEL_ERROR here can't take down the channel above (which
+    // is what previously broke live notifications on document upload / notes).
+    const activityChannel = supabase
+      .channel("taxops-activity")
       .on("postgres_changes", { event: "*", schema: "public", table: "task_activity" }, fetchActivity)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(activityChannel);
     };
   }, []);
 
