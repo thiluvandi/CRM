@@ -181,13 +181,21 @@ export default function App() {
     if (updates.status === "Completed") payload = { ...updates, completed_at: new Date().toISOString() };
     else if (updates.status === "Pending") payload = { ...updates, completed_at: null };
 
+    // Optimistic update: reflect the change locally right away so toggles feel
+    // instant instead of waiting on the write + activity log + refetch. The
+    // fetchTasks below (and the realtime subscription) reconcile with the DB.
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...payload } : t)));
+
     let { error } = await supabase.from("tasks").update(payload).eq("id", taskId);
     // Fall back for databases where add_completed_at_migration.sql hasn't run
     // yet — completed_at won't exist there, but status changes must still work.
     if (error?.code === UNDEFINED_COLUMN && payload !== updates) {
       ({ error } = await supabase.from("tasks").update(updates).eq("id", taskId));
     }
-    if (error) throw error;
+    if (error) {
+      await fetchTasks(); // roll the optimistic change back to server truth
+      throw error;
+    }
     if (activity) await logActivity(taskId, activity.action, activity.detail);
     await fetchTasks();
   };
