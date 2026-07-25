@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 const CONFETTI_COLORS = ["#14b8a6", "#0d9488", "#16a34a", "#d97706", "#1e4278", "#f59e0b"];
 const PIECES = 20;
 
@@ -33,18 +35,49 @@ function spawnCelebration(x, y) {
   setTimeout(() => layer.remove(), 1200);
 }
 
+// Must outlast the thumb's slide transition (transform 0.32s in App.css) so
+// the card doesn't unmount mid-animation when the status change filters it out.
+const SLIDE_MS = 340;
+
 export default function StatusToggle({ value, onChange, disabled }) {
-  const completed = value === "Completed";
+  // `visual` drives the thumb position so it can slide to the new side before
+  // the committed status change (and any resulting unmount) lands.
+  const [visual, setVisual] = useState(value === "Completed");
+  const lockRef = useRef(false);
+  const timerRef = useRef(null);
+
+  // Keep in sync with external changes (e.g. a realtime update from someone else).
+  useEffect(() => {
+    setVisual(value === "Completed");
+  }, [value]);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const completed = visual;
 
   const toggle = (e) => {
-    if (disabled) return;
+    if (disabled || lockRef.current) return;
     const next = completed ? "Pending" : "Completed";
+    setVisual(next === "Completed"); // start the slide immediately
+
     if (next === "Completed" && !prefersReducedMotion()) {
       const rect = e.currentTarget.getBoundingClientRect();
       navigator.vibrate?.(25);
       spawnCelebration(rect.left + rect.width * 0.72, rect.top + rect.height / 2);
     }
-    onChange(next);
+
+    if (prefersReducedMotion()) {
+      onChange(next);
+      return;
+    }
+
+    // Let the thumb finish sliding, then commit — this is what makes the
+    // green tab visibly glide back to "Pending" before the row moves.
+    lockRef.current = true;
+    timerRef.current = setTimeout(() => {
+      onChange(next);
+      lockRef.current = false;
+    }, SLIDE_MS);
   };
 
   return (
