@@ -43,6 +43,7 @@ create table if not exists tasks (
   draft_verified_by uuid references profiles(id),
   draft_verified_at timestamptz,
   created_by uuid references profiles(id),
+  completed_at timestamptz,
   created_at timestamptz not null default now()
 );
 

@@ -1035,6 +1035,33 @@
   background: var(--bg-surface);
 }
 
+/* Completed Tasks date filter */
+.date-filter-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 4px 0 16px;
+}
+
+.date-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.date-filter-field input {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--bg-surface);
+  color: var(--text-h);
+}
+
 /* Activity log */
 .task-activity {
   margin-top: 10px;

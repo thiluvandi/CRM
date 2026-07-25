@@ -17,11 +17,9 @@ export default function TasksHub({ users, tasks, notes, activity, currentUser, f
     visibleTasks = visibleTasks.filter((t) => t.assigned_to === filter.assignedTo);
   }
 
-  const showPending = !filter?.status || filter.status === "Pending";
-  const showCompleted = !filter?.status || filter.status === "Completed";
-
+  // Completed tasks now live in their own "Completed Tasks" tab; the hub only
+  // manages the active (pending) queue.
   const pending = visibleTasks.filter((t) => t.status === "Pending");
-  const completed = visibleTasks.filter((t) => t.status === "Completed");
 
   return (
     <div className="panel">
@@ -30,8 +28,8 @@ export default function TasksHub({ users, tasks, notes, activity, currentUser, f
           <h2 className="panel-title">Tasks Hub</h2>
           <p className="panel-sub">
             {seesAll
-              ? "Showing all client tasks across the firm."
-              : `Showing tasks assigned to ${currentUser.name}.`}
+              ? "Active client tasks across the firm. Completed tasks live in the Completed Tasks tab."
+              : `Your active tasks. Completed tasks live in the Completed Tasks tab.`}
           </p>
         </div>
         <button className="btn btn--primary" onClick={() => setShowAddForm((s) => !s)}>
@@ -68,53 +66,27 @@ export default function TasksHub({ users, tasks, notes, activity, currentUser, f
       )}
 
       <div className="task-columns">
-        {showPending && (
-          <div className="task-column">
-            <h3 className="task-column-title task-column-title--pending">Pending Tasks ({pending.length})</h3>
-            {pending.length === 0 && <p className="empty-note">No pending tasks.</p>}
-            {pending.map((t) => (
-              <TaskRow
-                key={t.id}
-                task={t}
-                users={users}
-                notes={notes.filter((n) => n.task_id === t.id)}
-                activity={activity.filter((a) => a.task_id === t.id)}
-                currentUser={currentUser}
-                canEditFields={editable}
-                canDelete={deletable}
-                canVerify={isAdminUser(currentUser)}
-                focusSignal={focusTask?.id === t.id ? focusTask.nonce : null}
-                onUpdate={onUpdateTask}
-                onDelete={onDeleteTask}
-                onAddNote={onAddNote}
-              />
-            ))}
-          </div>
-        )}
-
-        {showCompleted && (
-          <div className="task-column">
-            <h3 className="task-column-title task-column-title--completed">Completed Tasks ({completed.length})</h3>
-            {completed.length === 0 && <p className="empty-note">No completed tasks.</p>}
-            {completed.map((t) => (
-              <TaskRow
-                key={t.id}
-                task={t}
-                users={users}
-                notes={notes.filter((n) => n.task_id === t.id)}
-                activity={activity.filter((a) => a.task_id === t.id)}
-                currentUser={currentUser}
-                canEditFields={editable}
-                canDelete={deletable}
-                canVerify={isAdminUser(currentUser)}
-                focusSignal={focusTask?.id === t.id ? focusTask.nonce : null}
-                onUpdate={onUpdateTask}
-                onDelete={onDeleteTask}
-                onAddNote={onAddNote}
-              />
-            ))}
-          </div>
-        )}
+        <div className="task-column">
+          <h3 className="task-column-title task-column-title--pending">Pending Tasks ({pending.length})</h3>
+          {pending.length === 0 && <p className="empty-note">No pending tasks.</p>}
+          {pending.map((t) => (
+            <TaskRow
+              key={t.id}
+              task={t}
+              users={users}
+              notes={notes.filter((n) => n.task_id === t.id)}
+              activity={activity.filter((a) => a.task_id === t.id)}
+              currentUser={currentUser}
+              canEditFields={editable}
+              canDelete={deletable}
+              canVerify={isAdminUser(currentUser)}
+              focusSignal={focusTask?.id === t.id ? focusTask.nonce : null}
+              onUpdate={onUpdateTask}
+              onDelete={onDeleteTask}
+              onAddNote={onAddNote}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

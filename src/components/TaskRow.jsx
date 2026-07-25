@@ -203,6 +203,12 @@ export default function TaskRow({ task, users, notes = [], activity = [], curren
           <span>Assigned: {assigneeName}</span>
           <span>·</span>
           <span className={overdue ? "overdue-date" : undefined}>Due {task.deadline}{overdue ? " (overdue)" : ""}</span>
+          {task.status === "Completed" && task.completed_at && (
+            <>
+              <span>·</span>
+              <span>Completed {new Date(task.completed_at).toLocaleDateString()}</span>
+            </>
+          )}
         </div>
       </div>
 

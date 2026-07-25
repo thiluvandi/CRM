@@ -2,6 +2,7 @@ import { isAdminUser } from "../permissions";
 
 const TAB_DEFS = [
   { key: "dashboard", label: "Dashboard", adminOnly: false },
+  { key: "completed", label: "Completed Tasks", adminOnly: false },
   { key: "users", label: "User Management", adminOnly: true },
 ];
 

@@ -1,6 +1,6 @@
 import { isAdminUser } from "../permissions";
 
-export default function OverviewPanel({ users, tasks, currentUser, onSelectStatus, onSelectTotal, onSelectEmployee }) {
+export default function OverviewPanel({ users, tasks, currentUser, onSelectStatus, onSelectTotal, onSelectEmployee, onGoToCompleted }) {
   const admin = isAdminUser(currentUser);
 
   const pendingCount = tasks.filter((t) => t.status === "Pending").length;
@@ -39,7 +39,7 @@ export default function OverviewPanel({ users, tasks, currentUser, onSelectStatu
           <div className="metric-label">{admin ? "Total Pending Tasks" : "Your Pending Tasks"}</div>
           <div className="metric-value">{pendingCount}</div>
         </button>
-        <button type="button" className="metric-card metric-card--completed metric-card--clickable" onClick={() => onSelectStatus("Completed")}>
+        <button type="button" className="metric-card metric-card--completed metric-card--clickable" onClick={onGoToCompleted}>
           <div className="metric-label">{admin ? "Completed Tasks" : "Your Completed Tasks"}</div>
           <div className="metric-value">{completedCount}</div>
         </button>

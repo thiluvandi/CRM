@@ -4,6 +4,7 @@ import { sha256Hex } from "./lib/hash";
 import TopBanner from "./components/TopBanner";
 import NavDrawer from "./components/NavDrawer";
 import Dashboard from "./components/Dashboard";
+import CompletedTasks from "./components/CompletedTasks";
 import UserManagement from "./components/UserManagement";
 import WhoIsLoggingIn from "./components/WhoIsLoggingIn";
 import FirstRunSetup from "./components/FirstRunSetup";
@@ -122,7 +123,9 @@ export default function App() {
   };
 
   const handleSelectNotifiedTask = (taskId) => {
-    setActiveTab("dashboard");
+    // Completed tasks live in their own tab now, so route the focus there.
+    const task = tasks.find((t) => t.id === taskId);
+    setActiveTab(task?.status === "Completed" ? "completed" : "dashboard");
     setFocusTask({ id: taskId, nonce: Date.now() });
   };
 
@@ -172,7 +175,18 @@ export default function App() {
   };
 
   const handleUpdateTask = async (taskId, updates, activity) => {
-    const { error } = await supabase.from("tasks").update(updates).eq("id", taskId);
+    // Stamp/clear the completion date alongside a status change so the
+    // Completed Tasks tab can filter by when a task was actually finished.
+    let payload = updates;
+    if (updates.status === "Completed") payload = { ...updates, completed_at: new Date().toISOString() };
+    else if (updates.status === "Pending") payload = { ...updates, completed_at: null };
+
+    let { error } = await supabase.from("tasks").update(payload).eq("id", taskId);
+    // Fall back for databases where add_completed_at_migration.sql hasn't run
+    // yet — completed_at won't exist there, but status changes must still work.
+    if (error?.code === UNDEFINED_COLUMN && payload !== updates) {
+      ({ error } = await supabase.from("tasks").update(updates).eq("id", taskId));
+    }
     if (error) throw error;
     if (activity) await logActivity(taskId, activity.action, activity.detail);
     await fetchTasks();
@@ -285,6 +299,20 @@ export default function App() {
             currentUser={currentUser}
             focusTask={focusTask}
             onAddTask={handleAddTask}
+            onUpdateTask={handleUpdateTask}
+            onDeleteTask={handleDeleteTask}
+            onAddNote={handleAddNote}
+            onGoToCompleted={() => setActiveTab("completed")}
+          />
+        )}
+        {activeTab === "completed" && (
+          <CompletedTasks
+            users={users}
+            tasks={tasks}
+            notes={notes}
+            activity={activity}
+            currentUser={currentUser}
+            focusTask={focusTask}
             onUpdateTask={handleUpdateTask}
             onDeleteTask={handleDeleteTask}
             onAddNote={handleAddNote}
