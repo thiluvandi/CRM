@@ -62,7 +62,7 @@ export default function TasksHub({ users, tasks, notes, activity, taskFiles, cur
       )}
 
       {showAddForm && (
-        <AddTaskForm users={users} onAdd={onAddTask} onClose={() => setShowAddForm(false)} />
+        <AddTaskForm users={users} currentUser={currentUser} onAdd={onAddTask} onClose={() => setShowAddForm(false)} />
       )}
 
       <div className="task-columns">

@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-export default function AddTaskForm({ users, onAdd, onClose }) {
+export default function AddTaskForm({ users, currentUser, onAdd, onClose }) {
   const [client, setClient] = useState("");
   const [taskType, setTaskType] = useState("");
-  const [assignedTo, setAssignedTo] = useState(users[0]?.id || "");
+  const [assignedTo, setAssignedTo] = useState(currentUser?.id || users[0]?.id || "");
   const [deadline, setDeadline] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
