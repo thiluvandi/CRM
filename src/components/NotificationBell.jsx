@@ -16,7 +16,7 @@ function timeAgo(iso) {
   return new Date(iso).toLocaleDateString();
 }
 
-export default function NotificationBell({ currentUser, tasks, notes, users, onMarkSeen, onSelectTask }) {
+export default function NotificationBell({ currentUser, tasks, notes, users, taskFiles, onMarkSeen, onSelectTask }) {
   const [open, setOpen] = useState(false);
   // Mirrors the stored mark so the badge clears instantly, without waiting for
   // the write to land and the profile to be refetched.
@@ -24,8 +24,8 @@ export default function NotificationBell({ currentUser, tasks, notes, users, onM
   const panelRef = useRef(null);
 
   const items = useMemo(
-    () => buildNotifications({ currentUser, tasks, notes, users }),
-    [currentUser, tasks, notes, users]
+    () => buildNotifications({ currentUser, tasks, notes, users, taskFiles }),
+    [currentUser, tasks, notes, users, taskFiles]
   );
   const unread = countUnread(items, seenAt);
 

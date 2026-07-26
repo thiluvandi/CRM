@@ -10,7 +10,7 @@ import { isAdminUser } from "../permissions";
  * Returns newest first. Items carry an `at` ISO timestamp so unread counts can
  * be derived by comparing against a last-seen mark.
  */
-export function buildNotifications({ currentUser, tasks, notes, users }) {
+export function buildNotifications({ currentUser, tasks, notes, users, taskFiles = [] }) {
   if (!currentUser) return [];
 
   const nameOf = (id) => users.find((u) => u.id === id)?.name || "Someone";
@@ -20,31 +20,30 @@ export function buildNotifications({ currentUser, tasks, notes, users }) {
 
   const items = [];
 
-  if (admin) {
-    for (const task of tasks) {
-      if (task.draft_file_path && !task.draft_verified) {
-        items.push({
-          id: `verify-${task.id}`,
-          kind: "verify",
-          title: "Draft awaiting verification",
-          detail: `${label(task)} — uploaded by ${nameOf(task.draft_uploaded_by)}`,
-          at: task.draft_uploaded_at,
-          taskId: task.id,
-        });
-      }
-    }
-  } else {
-    for (const task of tasks) {
-      if (task.assigned_to === currentUser.id && task.draft_verified) {
-        items.push({
-          id: `verified-${task.id}`,
-          kind: "verified",
-          title: "Draft verified",
-          detail: `${label(task)} — verified by ${nameOf(task.draft_verified_by)}`,
-          at: task.draft_verified_at,
-          taskId: task.id,
-        });
-      }
+  // One notification per file: the CA sees each file still awaiting their
+  // verification; the assignee sees each of their files once it's verified.
+  for (const file of taskFiles) {
+    const task = taskOf(file.task_id);
+    if (!task) continue;
+
+    if (admin && !file.verified) {
+      items.push({
+        id: `verify-${file.id}`,
+        kind: "verify",
+        title: "File awaiting verification",
+        detail: `${label(task)} — ${file.file_name}, uploaded by ${nameOf(file.uploaded_by)}`,
+        at: file.uploaded_at,
+        taskId: task.id,
+      });
+    } else if (!admin && task.assigned_to === currentUser.id && file.verified) {
+      items.push({
+        id: `verified-${file.id}`,
+        kind: "verified",
+        title: "File verified",
+        detail: `${label(task)} — ${file.file_name}, verified by ${nameOf(file.verified_by)}`,
+        at: file.verified_at,
+        taskId: task.id,
+      });
     }
   }
 

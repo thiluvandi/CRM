@@ -80,6 +80,27 @@ create table if not exists task_activity (
 alter table task_activity enable row level security;
 
 -- ============================================================
+-- 2d. Task Files (many draft files per task, each independently
+--     verifiable; supersedes the single draft_* columns on tasks,
+--     which are kept for backward-compatibility / backfill)
+-- ============================================================
+create table if not exists task_files (
+  id bigint generated always as identity primary key,
+  task_id bigint not null references tasks(id) on delete cascade,
+  file_name text not null,
+  file_path text not null,
+  file_type text,
+  file_size bigint,
+  uploaded_by uuid references profiles(id),
+  uploaded_at timestamptz not null default now(),
+  verified boolean not null default false,
+  verified_by uuid references profiles(id),
+  verified_at timestamptz
+);
+
+alter table task_files enable row level security;
+
+-- ============================================================
 -- 3. RLS policies — open to the anon key; the app enforces who can
 --    see/edit what based on the logged-in user's permissions.
 --    NOTE: because select is open, password_hash IS technically readable
@@ -123,6 +144,15 @@ create policy "task_activity_select_anon" on task_activity for select using (tru
 
 drop policy if exists "task_activity_insert_anon" on task_activity;
 create policy "task_activity_insert_anon" on task_activity for insert with check (true);
+
+drop policy if exists "task_files_select_anon" on task_files;
+create policy "task_files_select_anon" on task_files for select using (true);
+drop policy if exists "task_files_insert_anon" on task_files;
+create policy "task_files_insert_anon" on task_files for insert with check (true);
+drop policy if exists "task_files_update_anon" on task_files;
+create policy "task_files_update_anon" on task_files for update using (true);
+drop policy if exists "task_files_delete_anon" on task_files;
+create policy "task_files_delete_anon" on task_files for delete using (true);
 
 -- ============================================================
 -- 4. Storage bucket for uploaded drafts (private — accessed via signed URLs)

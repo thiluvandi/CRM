@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase, DRAFTS_BUCKET } from "./supabaseClient";
 import { sha256Hex } from "./lib/hash";
 import TopBanner from "./components/TopBanner";
 import NavDrawer from "./components/NavDrawer";
@@ -24,6 +24,7 @@ export default function App() {
   const [tasks, setTasks] = useState([]);
   const [notes, setNotes] = useState([]);
   const [activity, setActivity] = useState([]);
+  const [taskFiles, setTaskFiles] = useState([]);
   const [currentUserId, setCurrentUserId] = useState(() => localStorage.getItem(REMEMBER_KEY));
   const [activeTab, setActiveTab] = useState("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -62,8 +63,17 @@ export default function App() {
     if (!error) setActivity(data);
   };
 
+  // Draft files live in their own table (add_task_files_migration.sql). Tolerate
+  // its absence like the others so the app still loads before it's applied.
+  const fetchTaskFiles = async () => {
+    const { data, error } = await supabase.from("task_files").select("*").order("uploaded_at");
+    if (!error) setTaskFiles(data);
+  };
+
   useEffect(() => {
-    Promise.all([fetchUsers(), fetchTasks(), fetchNotes(), fetchActivity()]).then(() => setLoading(false));
+    Promise.all([fetchUsers(), fetchTasks(), fetchNotes(), fetchActivity(), fetchTaskFiles()]).then(() =>
+      setLoading(false)
+    );
 
     // profiles/tasks/task_notes drive the live UI and notifications — keep them
     // on their own channel so nothing else can disturb their realtime feed.
@@ -82,9 +92,16 @@ export default function App() {
       .on("postgres_changes", { event: "*", schema: "public", table: "task_activity" }, fetchActivity)
       .subscribe();
 
+    // task_files on its own channel too, for the same isolation reason.
+    const filesChannel = supabase
+      .channel("taxops-files")
+      .on("postgres_changes", { event: "*", schema: "public", table: "task_files" }, fetchTaskFiles)
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(activityChannel);
+      supabase.removeChannel(filesChannel);
     };
   }, []);
 
@@ -211,9 +228,54 @@ export default function App() {
   };
 
   const handleDeleteTask = async (taskId) => {
+    // Remove the task's uploaded files from storage first — the DB rows cascade
+    // on delete, but storage objects would otherwise be orphaned. Best-effort.
+    const paths = taskFiles.filter((f) => f.task_id === taskId).map((f) => f.file_path);
+    const legacy = tasks.find((t) => t.id === taskId)?.draft_file_path;
+    if (legacy) paths.push(legacy);
+    if (paths.length) await supabase.storage.from(DRAFTS_BUCKET).remove(paths);
+
     const { error } = await supabase.from("tasks").delete().eq("id", taskId);
     if (error) throw error;
     await fetchTasks();
+    await fetchTaskFiles();
+  };
+
+  const handleAddFile = async (taskId, meta) => {
+    const { error } = await supabase
+      .from("task_files")
+      .insert({ ...meta, task_id: taskId, uploaded_by: currentUserId });
+    if (error) throw error;
+    await logActivity(taskId, "draft_uploaded", `Uploaded "${meta.file_name}"`);
+    await fetchTaskFiles();
+  };
+
+  const handleRemoveFile = async (file) => {
+    // Clear storage even if the object is already gone, so a stale reference
+    // can't leave a file row that can't be removed.
+    await supabase.storage.from(DRAFTS_BUCKET).remove([file.file_path]);
+    const { error } = await supabase.from("task_files").delete().eq("id", file.id);
+    if (error) throw error;
+    await logActivity(file.task_id, "draft_removed", `Removed "${file.file_name}"`);
+    await fetchTaskFiles();
+  };
+
+  const handleVerifyFile = async (file, verified) => {
+    const { error } = await supabase
+      .from("task_files")
+      .update({
+        verified,
+        verified_by: verified ? currentUserId : null,
+        verified_at: verified ? new Date().toISOString() : null,
+      })
+      .eq("id", file.id);
+    if (error) throw error;
+    await logActivity(
+      file.task_id,
+      verified ? "draft_verified" : "draft_unverified",
+      `${verified ? "Verified" : "Unverified"} "${file.file_name}"`
+    );
+    await fetchTaskFiles();
   };
 
   const handleAddNote = async (taskId, message) => {
@@ -291,6 +353,7 @@ export default function App() {
         tasks={tasks}
         notes={notes}
         users={users}
+        taskFiles={taskFiles}
         onMarkSeen={handleMarkNotificationsSeen}
         onSelectTask={handleSelectNotifiedTask}
         onLogout={handleLogout}
@@ -314,12 +377,16 @@ export default function App() {
             tasks={tasks}
             notes={notes}
             activity={activity}
+            taskFiles={taskFiles}
             currentUser={currentUser}
             focusTask={focusTask}
             onAddTask={handleAddTask}
             onUpdateTask={handleUpdateTask}
             onDeleteTask={handleDeleteTask}
             onAddNote={handleAddNote}
+            onAddFile={handleAddFile}
+            onRemoveFile={handleRemoveFile}
+            onVerifyFile={handleVerifyFile}
             onGoToCompleted={() => setActiveTab("completed")}
           />
         )}
@@ -329,11 +396,15 @@ export default function App() {
             tasks={tasks}
             notes={notes}
             activity={activity}
+            taskFiles={taskFiles}
             currentUser={currentUser}
             focusTask={focusTask}
             onUpdateTask={handleUpdateTask}
             onDeleteTask={handleDeleteTask}
             onAddNote={handleAddNote}
+            onAddFile={handleAddFile}
+            onRemoveFile={handleRemoveFile}
+            onVerifyFile={handleVerifyFile}
           />
         )}
         {activeTab === "users" && (

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { canViewAllTasks, canAddEditTasks, canDeleteData, isAdminUser } from "../permissions";
 import TaskRow from "./TaskRow";
 
-export default function CompletedTasks({ users, tasks, notes, activity, currentUser, focusTask, onUpdateTask, onDeleteTask, onAddNote }) {
+export default function CompletedTasks({ users, tasks, notes, activity, taskFiles, currentUser, focusTask, onUpdateTask, onDeleteTask, onAddNote, onAddFile, onRemoveFile, onVerifyFile }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
@@ -94,6 +94,7 @@ export default function CompletedTasks({ users, tasks, notes, activity, currentU
             users={users}
             notes={notes.filter((n) => n.task_id === t.id)}
             activity={activity.filter((a) => a.task_id === t.id)}
+            files={taskFiles.filter((f) => f.task_id === t.id)}
             currentUser={currentUser}
             canEditFields={editable}
             canDelete={deletable}
@@ -102,6 +103,9 @@ export default function CompletedTasks({ users, tasks, notes, activity, currentU
             onUpdate={onUpdateTask}
             onDelete={onDeleteTask}
             onAddNote={onAddNote}
+            onAddFile={onAddFile}
+            onRemoveFile={onRemoveFile}
+            onVerifyFile={onVerifyFile}
           />
         ))}
       </div>

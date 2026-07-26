@@ -3,7 +3,7 @@ import { isAdminUser } from "../permissions";
 import OverviewPanel from "./OverviewPanel";
 import TasksHub from "./TasksHub";
 
-export default function Dashboard({ users, tasks, notes, activity, currentUser, focusTask, onAddTask, onUpdateTask, onDeleteTask, onAddNote, onGoToCompleted }) {
+export default function Dashboard({ users, tasks, notes, activity, taskFiles, currentUser, focusTask, onAddTask, onUpdateTask, onDeleteTask, onAddNote, onAddFile, onRemoveFile, onVerifyFile, onGoToCompleted }) {
   const [filter, setFilter] = useState({ status: null, assignedTo: null });
   const tasksRef = useRef(null);
 
@@ -54,6 +54,7 @@ export default function Dashboard({ users, tasks, notes, activity, currentUser, 
           tasks={tasks}
           notes={notes}
           activity={activity}
+          taskFiles={taskFiles}
           currentUser={currentUser}
           focusTask={focusTask}
           filter={filter}
@@ -62,6 +63,9 @@ export default function Dashboard({ users, tasks, notes, activity, currentUser, 
           onUpdateTask={onUpdateTask}
           onDeleteTask={onDeleteTask}
           onAddNote={onAddNote}
+          onAddFile={onAddFile}
+          onRemoveFile={onRemoveFile}
+          onVerifyFile={onVerifyFile}
         />
       </div>
     </div>

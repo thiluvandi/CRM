@@ -3,7 +3,7 @@ import { isAdminUser } from "../permissions";
 import NotificationBell from "./NotificationBell";
 import logoWordmark from "../assets/logo-full CA removed.png";
 
-export default function TopBanner({ currentUser, tasks, notes, users, onMarkSeen, onSelectTask, onLogout, onMenuClick }) {
+export default function TopBanner({ currentUser, tasks, notes, users, taskFiles, onMarkSeen, onSelectTask, onLogout, onMenuClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const identityRef = useRef(null);
 
@@ -43,6 +43,7 @@ export default function TopBanner({ currentUser, tasks, notes, users, onMarkSeen
         currentUser={currentUser}
         tasks={tasks}
         notes={notes}
+        taskFiles={taskFiles}
         users={users}
         onMarkSeen={onMarkSeen}
         onSelectTask={onSelectTask}

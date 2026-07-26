@@ -1165,11 +1165,19 @@
   display: none;
 }
 
+.task-draft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .draft-info {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .draft-icon {
@@ -1181,6 +1189,15 @@
   flex-direction: column;
   gap: 1px;
   margin-right: auto;
+}
+
+/* Keep the verify / remove / replace controls together on one line so the
+   remove button stays beside Mark Verified instead of wrapping away on its own. */
+.draft-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .draft-link {

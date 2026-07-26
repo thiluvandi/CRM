@@ -4,10 +4,10 @@ import DraftPreviewModal from "./DraftPreviewModal";
 import NotesModal from "./NotesModal";
 import StatusToggle from "./StatusToggle";
 
-export default function TaskRow({ task, users, notes = [], activity = [], currentUser, canEditFields, canDelete, canVerify, focusSignal, onUpdate, onDelete, onAddNote }) {
+export default function TaskRow({ task, users, notes = [], activity = [], files = [], currentUser, canEditFields, canDelete, canVerify, focusSignal, onUpdate, onDelete, onAddNote, onAddFile, onRemoveFile, onVerifyFile }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState(null);
   const [notesOpen, setNotesOpen] = useState(false);
   const [logOpen, setLogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -31,94 +31,42 @@ export default function TaskRow({ task, users, notes = [], activity = [], curren
   }, [focusSignal]);
 
   const assigneeName = users.find((u) => u.id === task.assigned_to)?.name || "Unassigned";
-  const uploadedByName = task.draft_uploaded_by ? users.find((u) => u.id === task.draft_uploaded_by)?.name : null;
-  const verifiedByName = task.draft_verified_by ? users.find((u) => u.id === task.draft_verified_by)?.name : null;
+  const nameOf = (id) => (id ? users.find((u) => u.id === id)?.name : null);
 
   const triggerFileSelect = () => fileInputRef.current?.click();
 
+  // Upload each selected file to storage, then record it as its own task_files
+  // row. Files are independent, so one failure doesn't abort the rest.
   const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
+    const chosen = Array.from(e.target.files || []);
     e.target.value = "";
-    if (!file) return;
+    if (chosen.length === 0) return;
     setUploadError("");
     setUploading(true);
-    const oldPath = task.draft_file_path;
-    const path = `${task.id}/${Date.now()}-${file.name}`;
-    const { error: uploadErr } = await supabase.storage.from(DRAFTS_BUCKET).upload(path, file, { upsert: true });
-    if (uploadErr) {
-      setUploadError(uploadErr.message);
-      setUploading(false);
-      return;
-    }
-    const replacing = !!oldPath;
-    await onUpdate(
-      task.id,
-      {
-        draft_file_name: file.name,
-        draft_file_path: path,
-        draft_file_type: file.type,
-        draft_file_size: file.size,
-        draft_uploaded_by: currentUser.id,
-        draft_uploaded_at: new Date().toISOString(),
-        draft_verified: false,
-        draft_verified_by: null,
-        draft_verified_at: null,
-      },
-      { action: replacing ? "draft_replaced" : "draft_uploaded", detail: `${replacing ? "Replaced draft with" : "Uploaded draft"} "${file.name}"` },
-    );
-    // Delete the superseded object only after the row points at the new one, so
-    // a failed replace never leaves the task referencing a deleted file. The old
-    // path is timestamped, so it's distinct from the new upload. Best-effort:
-    // the replace has already succeeded, a leftover object is not worth erroring.
-    if (oldPath && oldPath !== path) {
-      const { error: cleanupErr } = await supabase.storage.from(DRAFTS_BUCKET).remove([oldPath]);
-      if (cleanupErr) console.warn("Could not delete replaced draft:", oldPath, cleanupErr.message);
+    for (const file of chosen) {
+      const path = `${task.id}/${Date.now()}-${file.name}`;
+      const { error: uploadErr } = await supabase.storage.from(DRAFTS_BUCKET).upload(path, file, { upsert: true });
+      if (uploadErr) {
+        setUploadError(uploadErr.message);
+        continue;
+      }
+      try {
+        await onAddFile(task.id, {
+          file_name: file.name,
+          file_path: path,
+          file_type: file.type,
+          file_size: file.size,
+        });
+      } catch (err) {
+        setUploadError(err.message);
+      }
     }
     setUploading(false);
   };
 
-  const toggleVerified = () => {
-    const verified = !task.draft_verified;
-    onUpdate(
-      task.id,
-      {
-        draft_verified: verified,
-        draft_verified_by: verified ? currentUser.id : null,
-        draft_verified_at: verified ? new Date().toISOString() : null,
-      },
-      { action: verified ? "draft_verified" : "draft_unverified", detail: verified ? "Marked draft verified" : "Removed draft verification" },
-    );
-  };
-
-  const handleRemoveDraft = async () => {
-    if (!window.confirm(`Remove "${task.draft_file_name}"? This also clears its verification.`)) return;
-    setUploadError("");
-    setUploading(true);
-    // Clear the row even if the storage object is already gone, so a stale
-    // reference can't leave the task stuck with an unremovable file.
-    const { error: removeErr } = await supabase.storage.from(DRAFTS_BUCKET).remove([task.draft_file_path]);
-    if (removeErr) {
-      setUploadError(removeErr.message);
-      setUploading(false);
-      return;
-    }
-    const removedName = task.draft_file_name;
-    await onUpdate(
-      task.id,
-      {
-        draft_file_name: null,
-        draft_file_path: null,
-        draft_file_type: null,
-        draft_file_size: null,
-        draft_uploaded_by: null,
-        draft_uploaded_at: null,
-        draft_verified: false,
-        draft_verified_by: null,
-        draft_verified_at: null,
-      },
-      { action: "draft_removed", detail: `Removed draft "${removedName}"` },
-    );
-    setUploading(false);
+  const removeFile = (file) => {
+    if (!window.confirm(`Remove "${file.file_name}"? This also clears its verification.`)) return;
+    onRemoveFile(file);
   };
 
   const startEdit = () => {
@@ -222,65 +170,62 @@ export default function TaskRow({ task, users, notes = [], activity = [], curren
       </div>
 
       <div className="task-draft">
-        {task.draft_file_path ? (
-          <div className="draft-info">
+        {files.map((file) => (
+          <div className="draft-info" key={file.id}>
             <span className="draft-icon">📎</span>
             <div className="draft-meta">
-              <button type="button" className="draft-link" onClick={() => setPreviewOpen(true)}>
-                {task.draft_file_name}
+              <button type="button" className="draft-link" onClick={() => setPreviewFile(file)}>
+                {file.file_name}
               </button>
               <span className="draft-sub">
-                {formatSize(task.draft_file_size)} · Uploaded by {uploadedByName || "—"} ·{" "}
-                {new Date(task.draft_uploaded_at).toLocaleString()}
+                {formatSize(file.file_size)} · Uploaded by {nameOf(file.uploaded_by) || "—"} ·{" "}
+                {new Date(file.uploaded_at).toLocaleString()}
               </span>
             </div>
-            {task.draft_verified ? (
-              <span
-                className="draft-badge draft-badge--verified"
-                title={`Verified by ${verifiedByName || "—"} · ${new Date(task.draft_verified_at).toLocaleString()}`}
-              >
-                ✓ Verified
-              </span>
-            ) : canVerify ? (
-              <button className="btn btn--primary btn--sm" onClick={toggleVerified}>
-                Mark Verified
-              </button>
-            ) : (
-              <span className="draft-badge draft-badge--pending">Awaiting CA review</span>
-            )}
-            {task.draft_verified && canVerify && (
-              <button className="btn btn--ghost btn--sm" onClick={toggleVerified}>
-                Unverify
-              </button>
-            )}
-            <button
-              className="btn btn--ghost btn--sm btn--icon"
-              onClick={triggerFileSelect}
-              disabled={uploading}
-              title="Replace file"
-              aria-label="Replace file"
-            >
-              {uploading ? "…" : "↻"}
-            </button>
-            {(canVerify || task.draft_uploaded_by === currentUser.id) && (
-              <button
-                className="btn btn--danger btn--sm btn--icon"
-                onClick={handleRemoveDraft}
-                disabled={uploading}
-                title="Remove file"
-                aria-label="Remove file"
-              >
-                ✕
-              </button>
-            )}
+            <div className="draft-actions">
+              {file.verified ? (
+                <span
+                  className="draft-badge draft-badge--verified"
+                  title={`Verified by ${nameOf(file.verified_by) || "—"} · ${new Date(file.verified_at).toLocaleString()}`}
+                >
+                  ✓ Verified
+                </span>
+              ) : canVerify ? (
+                <button className="btn btn--primary btn--sm" onClick={() => onVerifyFile(file, true)}>
+                  Mark Verified
+                </button>
+              ) : (
+                <span className="draft-badge draft-badge--pending">Awaiting CA review</span>
+              )}
+              {file.verified && canVerify && (
+                <button className="btn btn--ghost btn--sm" onClick={() => onVerifyFile(file, false)}>
+                  Unverify
+                </button>
+              )}
+              {(canVerify || file.uploaded_by === currentUser.id) && (
+                <button
+                  className="btn btn--danger btn--sm btn--icon"
+                  onClick={() => removeFile(file)}
+                  title="Remove file"
+                  aria-label="Remove file"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
-        ) : (
-          <button className="btn btn--ghost btn--sm" onClick={triggerFileSelect} disabled={uploading}>
-            {uploading ? "Uploading…" : "📎 Upload Draft"}
-          </button>
-        )}
+        ))}
+        <button className="btn btn--ghost btn--sm" onClick={triggerFileSelect} disabled={uploading}>
+          {uploading ? "Uploading…" : files.length > 0 ? "📎 Add File" : "📎 Upload File"}
+        </button>
         {uploadError && <div className="form-error" style={{ marginTop: 8 }}>{uploadError}</div>}
-        <input type="file" ref={fileInputRef} className="draft-file-input" onChange={handleFileChange} />
+        <input
+          type="file"
+          multiple
+          ref={fileInputRef}
+          className="draft-file-input"
+          onChange={handleFileChange}
+        />
       </div>
 
       <div className="task-card-actions">
@@ -372,14 +317,14 @@ export default function TaskRow({ task, users, notes = [], activity = [], curren
         )}
       </div>
 
-      {previewOpen && task.draft_file_path && (
+      {previewFile && (
         <DraftPreviewModal
           draftFile={{
-            name: task.draft_file_name,
-            path: task.draft_file_path,
-            type: task.draft_file_type,
+            name: previewFile.file_name,
+            path: previewFile.file_path,
+            type: previewFile.file_type,
           }}
-          onClose={() => setPreviewOpen(false)}
+          onClose={() => setPreviewFile(null)}
         />
       )}
 
