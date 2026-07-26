@@ -16,9 +16,10 @@ export default function TaskRow({ task, users, notes = [], activity = [], files 
   const fileInputRef = useRef(null);
   const cardRef = useRef(null);
 
-  // A task's creator can always edit it, even without the firm-wide Add/Edit
-  // permission; everyone else needs that permission.
+  // A task's creator can always edit or delete it, even without the firm-wide
+  // Add/Edit or Delete permissions; everyone else needs the relevant permission.
   const canEdit = canEditFields || task.created_by === currentUser.id;
+  const canRemove = canDelete || task.created_by === currentUser.id;
 
   // focusSignal carries a fresh nonce each time a notification for this task is
   // clicked, so re-clicking the same one re-triggers the scroll and highlight.
@@ -258,7 +259,7 @@ export default function TaskRow({ task, users, notes = [], activity = [], files 
             </svg>
           </button>
         )}
-        {canDelete && (
+        {canRemove && (
           <button
             className="btn btn--danger btn--sm btn--icon"
             onClick={() => {
