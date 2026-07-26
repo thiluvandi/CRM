@@ -1242,7 +1242,18 @@
   white-space: nowrap;
 }
 
-.draft-modal-close {
+.draft-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.draft-modal-close,
+.draft-modal-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: var(--bg-muted);
   color: var(--text-muted);
@@ -1254,9 +1265,28 @@
   flex-shrink: 0;
 }
 
-.draft-modal-close:hover {
+.draft-modal-close:hover,
+.draft-modal-icon-btn:hover {
   background: var(--border);
   color: var(--text-h);
+}
+
+/* Fullscreen: the modal element fills the physical screen (the class is
+   toggled from JS alongside the Fullscreen API call). */
+.draft-modal--fs {
+  max-width: none;
+  max-height: none;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+}
+
+.draft-modal--fs .draft-preview-frame {
+  height: calc(100vh - 57px);
+}
+
+.draft-modal--fs .draft-preview-image {
+  max-height: calc(100vh - 57px);
 }
 
 .draft-modal-body {
