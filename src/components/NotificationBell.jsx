@@ -150,7 +150,7 @@ export default function NotificationBell({ currentUser, tasks, notes, users, tas
               aria-label={muted ? "Unmute notification sound" : "Mute notification sound"}
               title={muted ? "Sound off — click to unmute" : "Sound on — click to mute"}
             >
-              {muted ? "🔕" : "🔔"}
+              {muted ? "Unmute" : "Mute"}
             </button>
           </div>
           {items.length === 0 ? (
