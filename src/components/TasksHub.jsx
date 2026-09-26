@@ -18,8 +18,11 @@ export default function TasksHub({ users, tasks, notes, activity, taskFiles, cur
   }
 
   // Completed tasks now live in their own "Completed Tasks" tab; the hub only
-  // manages the active (pending) queue.
-  const pending = visibleTasks.filter((t) => t.status === "Pending");
+  // manages the active (pending) queue. Priority-flagged tasks float to the top;
+  // Array.sort is stable, so tasks within each group keep their existing order.
+  const pending = visibleTasks
+    .filter((t) => t.status === "Pending")
+    .sort((a, b) => (b.priority ? 1 : 0) - (a.priority ? 1 : 0));
 
   return (
     <div className="panel">

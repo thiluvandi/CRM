@@ -214,10 +214,22 @@ export default function App() {
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, ...payload } : t)));
 
     let { error } = await supabase.from("tasks").update(payload).eq("id", taskId);
-    // Fall back for databases where add_completed_at_migration.sql hasn't run
-    // yet — completed_at won't exist there, but status changes must still work.
-    if (error?.code === UNDEFINED_COLUMN && payload !== updates) {
-      ({ error } = await supabase.from("tasks").update(updates).eq("id", taskId));
+    // Fall back for databases where a newer migration hasn't run yet — e.g.
+    // add_completed_at_migration.sql or add_priority_migration.sql. Drop the
+    // optional columns and retry so core edits (status, fields) still persist;
+    // the missing feature just degrades gracefully until the migration runs.
+    if (error?.code === UNDEFINED_COLUMN) {
+      const fallback = { ...payload };
+      let stripped = false;
+      for (const col of ["completed_at", "priority"]) {
+        if (col in fallback) {
+          delete fallback[col];
+          stripped = true;
+        }
+      }
+      if (stripped && Object.keys(fallback).length > 0) {
+        ({ error } = await supabase.from("tasks").update(fallback).eq("id", taskId));
+      }
     }
     if (error) {
       await fetchTasks(); // roll the optimistic change back to server truth

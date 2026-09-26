@@ -153,7 +153,33 @@ export default function TaskRow({ task, users, notes = [], activity = [], files 
               💬 Notes{notes.length > 0 ? ` (${notes.length})` : ""}
             </button>
           </div>
-          <span className={`status-pill status-pill--${task.status.toLowerCase()}`}>{task.status}</span>
+          <div className="task-header-right">
+            {canEdit ? (
+              <button
+                type="button"
+                className={`priority-toggle ${task.priority ? "priority-toggle--on" : ""}`}
+                onClick={() =>
+                  onUpdate(
+                    task.id,
+                    { priority: !task.priority },
+                    { action: "priority_changed", detail: task.priority ? "Cleared priority" : "Marked as priority" },
+                  )
+                }
+                aria-pressed={!!task.priority}
+                title={task.priority ? "Remove priority" : "Mark as priority"}
+              >
+                <span aria-hidden="true">{task.priority ? "★" : "☆"}</span>
+                Priority
+              </button>
+            ) : (
+              task.priority && (
+                <span className="priority-badge" title="High priority">
+                  <span aria-hidden="true">★</span> Priority
+                </span>
+              )
+            )}
+            <span className={`status-pill status-pill--${task.status.toLowerCase()}`}>{task.status}</span>
+          </div>
         </div>
         <div className="task-card-meta">
           <span>{task.task_type}</span>

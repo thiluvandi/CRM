@@ -32,6 +32,7 @@ create table if not exists tasks (
   task_type text not null,
   assigned_to uuid not null references profiles(id),
   status text not null default 'Pending' check (status in ('Pending', 'Completed')),
+  priority boolean not null default false,
   deadline date not null,
   draft_file_name text,
   draft_file_path text,
